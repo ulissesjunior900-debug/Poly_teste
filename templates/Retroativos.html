@@ -1,0 +1,1108 @@
+{% set usar_tailwind = true %}
+{% extends 'base.html' %}
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Retroativos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    select option {
+        color: #1f2937;
+        background-color: #fff;
+    }
+    
+    #artistSelect option {
+        color: #000;
+        background-color: #fff
+    }
+
+    #artistSelect[multiple] option:checked {
+        color: #fff; 
+        background-color: #4f46e5;
+    }
+
+    select option:checked {
+        color: #ffffff;
+        background-color: #4f46e5;
+    }
+    
+    /* Restante do seu CSS */
+    .pagination {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+        height: 8px;
+        width: 8px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+    
+    .valor-formatado {
+        white-space: nowrap;
+    }
+    
+    #loading-indicator {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: #4f46e5;
+        color: white;
+        text-align: center;
+        padding: 10px;
+        z-index: 1000;
+        font-weight: bold;
+    }
+    
+    /* Estilo para inputs de percentual no modal */
+    .percentual-input {
+        width: 80px;
+        padding: 4px 8px;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        text-align: right;
+    }
+</style>
+
+{% block content %}
+<div class="bg-gray-50 font-sans">
+    <!-- Indicador de carregamento -->
+    <div id="loading-indicator">Buscando, aguarde...</div>
+    
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-indigo-800">Dashboard de Retroativos</h1>
+            <p class="text-gray-600">Visualize e gere relatórios de royalties retroativos para artistas</p>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <!-- Step 1: Overview -->
+            <div id="step1" class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Filtros</h2>
+                
+                <!-- Filter Section -->
+                <form id="filterForm">
+                    <div class="grid grid-cols-1 md:grid-cols-7 gap-4 mb-6">
+                        <!-- Artist Multi-select -->
+                        <div class="col-span-1 md:col-span-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Artistas</label>
+                            <div class="relative">
+                                <select id="artistSelect" multiple class="w-[600px] h-[150px] px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    {% for artista in artistas %}
+                                    <option value="{{ artista }}">{{ artista }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Date Range -->
+                        <div class="col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Data Inicial</label>
+                            <div class="flex gap-2">
+                                <select id="startMonth" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="1">Jan</option>
+                                    <option value="2">Fev</option>
+                                    <option value="3">Mar</option>
+                                    <option value="4">Abr</option>
+                                    <option value="5">Mai</option>
+                                    <option value="6">Jun</option>
+                                    <option value="7">Jul</option>
+                                    <option value="8">Ago</option>
+                                    <option value="9">Set</option>
+                                    <option value="10">Out</option>
+                                    <option value="11">Nov</option>
+                                    <option value="12">Dez</option>
+                                </select>
+                                <select id="startYear" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    {% for ano in anos_disponiveis %}
+                                    <option value="{{ ano }}" {% if ano == min_ano %}selected{% endif %}>{{ ano }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-span-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Data Final</label>
+                            <div class="flex gap-2">
+                                <select id="endMonth" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="1">Jan</option>
+                                    <option value="2">Fev</option>
+                                    <option value="3">Mar</option>
+                                    <option value="4">Abr</option>
+                                    <option value="5">Mai</option>
+                                    <option value="6">Jun</option>
+                                    <option value="7">Jul</option>
+                                    <option value="8">Ago</option>
+                                    <option value="9">Set</option>
+                                    <option value="10">Out</option>
+                                    <option value="11">Nov</option>
+                                    <option value="12">Dez</option>
+                                </select>
+                                <select id="endYear" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                    {% for ano in anos_disponiveis %}
+                                    <option value="{{ ano }}" {% if ano == max_ano %}selected{% endif %}>{{ ano }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Títulos Section -->
+                        <div class="col-span-1 md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Títulos</label>
+                            <button id="btnGerenciarTitulos" type="button" class="w-full bg-indigo-600 text-white px-3 py-2 rounded-md hover:bg-indigo-700">
+                                <i class="fas fa-book mr-2"></i> Gerenciar Títulos
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <button id="nextButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-md transition duration-150 ease-in-out">
+                    Avançar Relatório <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+                
+                <!-- Search and Table -->
+                <div class="mt-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-gray-800">Artistas</h2>
+                        <!-- Busca com formulário GET -->
+                        <form method="GET" class="relative flex gap-2 items-center">
+                            <input id="inputBuscaArtista" name="search" type="text" placeholder="Buscar artista..." 
+                                class="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                                value="{{ search_query }}">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                            <button type="submit" class="bg-indigo-500 text-white px-3 py-1 rounded-md hover:bg-indigo-600">
+                                Buscar
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Artista</th>
+                                    {% for ano in anos_tabela %}
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ ano }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody id="artistsTableBody" class="bg-white divide-y divide-gray-200">
+                                {% for artista in artistas_tabela %}
+                                <tr class="hover:bg-gray-50" 
+                                    data-artista-id="{{ artista.id }}" 
+                                    data-name="{{ artista.nome|lower }}">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ artista.nome }}</td>
+                                    {% for ano in anos_tabela %}
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 valor-formatado">
+                                        {% if artista.valores[ano] is defined %}
+                                            €{{ "%.2f"|format(artista.valores[ano]) }}
+                                        {% else %}
+                                            —
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Paginação -->
+                    <div class="flex items-center justify-between mt-4">
+                        <div class="text-sm text-gray-500">
+                            Página {{ current_page }} de {{ total_pages }}
+                        </div>
+                        <div class="flex gap-2">
+                            {% set start_page = (current_page - 2) if (current_page - 2) > 1 else 1 %}
+                            {% set end_page = start_page + 4 if (start_page + 4) < total_pages else total_pages %}
+
+                            {% if start_page > 1 %}
+                                <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" 
+                                   class="px-3 py-1 border border-gray-300 rounded-md text-sm bg-white hover:bg-gray-100">
+                                    «
+                                </a>
+                            {% endif %}
+
+                            {% if current_page > 1 %}
+                                <a href="?page={{ current_page - 1 }}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                                   class="px-3 py-1 border border-gray-300 rounded-md text-sm bg-white hover:bg-gray-100">
+                                    ‹
+                                </a>
+                            {% endif %}
+
+                            {% for p in range(start_page, end_page + 1) %}
+                                <a href="?page={{ p }}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                                   class="px-3 py-1 border border-gray-300 rounded-md text-sm {% if p == current_page %}bg-indigo-600 text-white{% else %}bg-white hover:bg-gray-100{% endif %}">
+                                    {{ p }}
+                                </a>
+                            {% endfor %}
+
+                            {% if current_page < total_pages %}
+                                <a href="?page={{ current_page + 1 }}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                                   class="px-3 py-1 border border-gray-300 rounded-md text-sm bg-white hover:bg-gray-100">
+                                    ›
+                                </a>
+                            {% endif %}
+
+                            {% if end_page < total_pages %}
+                                <a href="?page={{ total_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                                   class="px-3 py-1 border border-gray-300 rounded-md text-sm bg-white hover:bg-gray-100">
+                                    »
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Step 2: Report Generation (Hidden by default) -->
+            <div id="step2" class="bg-white rounded-lg shadow-md p-6 mb-8 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-800">Gerar Relatório</h2>
+                        <p id="periodoRelatorio" class="text-gray-600">Período selecionado: </p>
+                    </div>
+                    <button id="backButton" class="text-indigo-600 hover:text-indigo-800 flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i> Voltar
+                    </button>
+                </div>
+                
+                <!-- Additional Fields -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Percentual (%)</label>
+                        <div class="relative rounded-md shadow-sm">
+                            <input id="percentageInput" type="number" class="focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-3 pr-12 py-2 sm:text-sm border-gray-300 rounded-md" placeholder="0.00" step="0.01" min="0" max="100">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">%</span>
+                            </div>
+                        </div>
+                        <!-- Botão para abrir o modal de percentual por título -->
+                        <button id="btnPercentualTitulo" type="button" class="mt-2 w-full bg-indigo-600 text-white px-3 py-2 rounded-md hover:bg-indigo-700 flex items-center justify-center">
+                            <i class="fas fa-percent mr-2"></i> Percentual por título
+                        </button>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cotação</label>
+                        <select id="exchangeRate" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            {% for cotacao in cotacoes %}
+                            <option value="{{ cotacao.valor }}" data-id="{{ cotacao.id }}">
+                                {{ cotacao.descricao }} ({{ cotacao.valor }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Artista Selecionado</label>
+                        <div id="selectedArtist" class="px-3 py-2 bg-gray-100 rounded-md text-sm text-gray-700">
+                            {{ artista_selecionado }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botão Calcular -->
+                <div class="mb-6 flex justify-end">
+                    <button id="calculateButton" class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-md transition duration-150 ease-in-out flex items-center">
+                        <i class="fas fa-calculator mr-2"></i> Calcular
+                    </button>
+                </div>
+                
+                <!-- Summary Table -->
+                <div class="overflow-x-auto custom-scrollbar mb-6">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Artista</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ano</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Título</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lucro Líquido (€)</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentual</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lucro x % (€)</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor Convertido</th>
+                            </tr>
+                        </thead>
+                        <tbody id="relatorioBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Os dados serão preenchidos dinamicamente aqui -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Totals -->
+                <div id="relatorioTotais" class="bg-indigo-50 p-4 rounded-md mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <p class="text-sm text-indigo-700">Total Lucro Líquido (€)</p>
+                            <p class="text-xl font-semibold text-indigo-900 total-lucro">
+                                €0,00
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-indigo-700">Total Aplicado (€)</p>
+                            <p class="text-xl font-semibold text-indigo-900 total-aplicado">
+                                €0,00
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-indigo-700">Total Convertido</p>
+                            <p class="text-xl font-semibold text-indigo-900 total-convertido">
+                                R$0,00
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Formulário para gerar relatório -->
+                <form method="POST" action="/exportar_retroativo" target="_blank" onsubmit="return prepararFormulario(event)">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="percentual" id="percentualHidden">
+                    <input type="hidden" name="cotacao_id" id="cotacaoIdHidden">
+                    <input type="hidden" name="anoInicialHidden" id="anoInicialHidden">
+                    <input type="hidden" name="mesInicialHidden" id="mesInicialHidden">
+                    <input type="hidden" name="anoFinalHidden" id="anoFinalHidden">
+                    <input type="hidden" name="mesFinalHidden" id="mesFinalHidden">
+                    <input type="hidden" name="artistasHidden" id="artistasHidden">
+                    <input type="hidden" name="titulosHidden" id="titulosHidden">
+                    <input type="hidden" name="percentuais_titulos" id="percentuaisTitulosHidden">
+
+                    <div class="flex justify-end">
+                        <button type="submit"
+                                class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-md transition duration-150 ease-in-out flex items-center">
+                            <i class="fas fa-file-export mr-2"></i> Gerar Relatório
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <!-- Modal de Gerenciamento de Títulos -->
+        <div id="titulosModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold text-gray-800">Gerenciar Títulos</h3>
+                        <button id="btnFecharModal" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-content overflow-y-auto max-h-[70vh]">
+                        <!-- Conteúdo dinâmico: cada artista selecionado com seus títulos -->
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button id="btnSalvarModal" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                            Salvar
+                        </button>
+                        <button id="btnCancelarModal" class="ml-2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Novo Modal de Percentual por Título -->
+        <div id="percentualTituloModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-semibold text-gray-800">Percentual por Título</h3>
+                        <button id="btnFecharPercentualModal" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-percentual-content overflow-y-auto max-h-[70vh]">
+                        <!-- Conteúdo dinâmico: cada título com input de percentual -->
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button id="btnSalvarPercentualModal" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
+                            Salvar
+                        </button>
+                        <button id="btnCancelarPercentualModal" class="ml-2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // =================================================================
+    // 1. Cache de elementos DOM
+    // =================================================================
+    const elements = {
+        inputBusca: document.getElementById("inputBuscaArtista"),
+        linhasTabela: document.querySelectorAll("#artistsTableBody tr"),
+        loadingIndicator: document.getElementById("loading-indicator"),
+        artistSelect: document.getElementById('artistSelect'),
+        titulosModal: document.getElementById('titulosModal'),
+        btnGerenciarTitulos: document.getElementById('btnGerenciarTitulos'),
+        btnFecharModal: document.getElementById('btnFecharModal'),
+        btnSalvarModal: document.getElementById('btnSalvarModal'),
+        btnCancelarModal: document.getElementById('btnCancelarModal'),
+        modalContent: document.querySelector('.modal-content'),
+        percentualTituloModal: document.getElementById('percentualTituloModal'),
+        btnPercentualTitulo: document.getElementById('btnPercentualTitulo'),
+        btnFecharPercentualModal: document.getElementById('btnFecharPercentualModal'),
+        btnSalvarPercentualModal: document.getElementById('btnSalvarPercentualModal'),
+        btnCancelarPercentualModal: document.getElementById('btnCancelarPercentualModal'),
+        modalPercentualContent: document.querySelector('.modal-percentual-content'),
+        nextButton: document.getElementById('nextButton'),
+        backButton: document.getElementById('backButton'),
+        calculateButton: document.getElementById('calculateButton'),
+        percentageInput: document.getElementById('percentageInput'),
+        exchangeRate: document.getElementById('exchangeRate'),
+        relatorioBody: document.getElementById('relatorioBody'),
+        totalLucro: document.querySelector('.total-lucro'),
+        totalAplicado: document.querySelector('.total-aplicado'),
+        totalConvertido: document.querySelector('.total-convertido'),
+        startYear: document.getElementById('startYear'),
+        startMonth: document.getElementById('startMonth'),
+        endYear: document.getElementById('endYear'),
+        endMonth: document.getElementById('endMonth')
+    };
+
+    // =================================================================
+    // 2. Objetos de estado
+    // =================================================================
+    const state = {
+        titulosSelecionados: {}, // { artistaId: [titulo1, titulo2, ...], ... }
+        percentuaisPorTitulo: {} // { titulo: percentual, ... }
+    };
+
+    // =================================================================
+    // 3. Funções utilitárias
+    // =================================================================
+    function normalizarTexto(texto) {
+        return texto
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toLowerCase()
+            .trim();
+    }
+
+    function formatarNumero(valor, moeda = '', casas = 2) {
+        if (valor === null || valor === undefined || isNaN(valor)) return valor;
+        
+        const numero = Number(valor);
+        if (isNaN(numero)) return valor;
+        
+        const partes = numero.toFixed(casas).split('.');
+        let parteInteira = partes[0];
+        let sinal = '';
+        
+        if (parteInteira.startsWith('-')) {
+            sinal = '-';
+            parteInteira = parteInteira.substring(1);
+        }
+        
+        parteInteira = parteInteira.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        const parteDecimal = partes[1];
+        return sinal + moeda + parteInteira + (casas > 0 ? ',' + parteDecimal : '');
+    }
+
+    function getCSRFToken() {
+        const tokenInput = document.querySelector('input[name="csrf_token"]');
+        return tokenInput ? tokenInput.value : '';
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // =================================================================
+    // 4. Funções de manipulação de UI
+    // =================================================================
+    function fecharModal() {
+        elements.titulosModal.classList.add('hidden');
+    }
+
+    function fecharModalPercentual() {
+        elements.percentualTituloModal.classList.add('hidden');
+    }
+
+    // =================================================================
+    // 5. Funções de carregamento de dados
+    // =================================================================
+    async function carregarModalTitulos(artistas) {
+        elements.modalContent.innerHTML = '';
+        
+        for (const artista of artistas) {
+            const section = document.createElement('div');
+            section.className = 'mb-6 p-4 bg-gray-50 rounded-lg';
+            section.setAttribute('data-artista-id', artista.id);
+            section.innerHTML = `
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="font-semibold text-lg text-gray-800">${artista.nome}</h4>
+                    <button class="btn-selecionar-todos text-sm bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700"
+                            data-artista-id="${artista.id}">
+                        <i class="fas fa-check-square mr-1"></i> Selecionar todos
+                    </button>
+                </div>
+                <div class="titulos-list grid grid-cols-1 md:grid-cols-2 gap-2" data-artista-id="${artista.id}">
+                    <!-- Títulos serão carregados aqui -->
+                </div>
+            `;
+            elements.modalContent.appendChild(section);
+
+            try {
+                const nomeEncode = encodeURIComponent(artista.nome);
+                const response = await fetch(`/api/titulos_por_nome/${nomeEncode}`);
+                if (!response.ok) throw new Error('Erro na API');
+                
+                // Recebe array de strings: ["Título 1", "Título 2", ...]
+                const titulos = await response.json();
+                const titulosList = section.querySelector('.titulos-list');
+                titulosList.innerHTML = '';
+                
+                titulos.forEach((titulo, index) => {
+                    const id = `titulo-${artista.id}-${index}`;
+                    const div = document.createElement('div');
+                    div.className = 'titulo-item flex items-center';
+                    
+                    // Usa o próprio título como valor e identificador
+                    div.innerHTML = `
+                        <input type="checkbox" id="${id}"
+                               class="mr-2 h-4 w-4 text-indigo-600 rounded" 
+                               value="${titulo}"
+                               ${(state.titulosSelecionados[artista.id] && state.titulosSelecionados[artista.id].includes(titulo)) ? 'checked' : ''}>
+                        <label for="${id}" class="text-sm text-gray-700 truncate">${titulo}</label>
+                    `;
+                    titulosList.appendChild(div);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar títulos:', error);
+                section.querySelector('.titulos-list').innerHTML = '<p class="text-sm text-red-500">Erro ao carregar títulos</p>';
+            }
+        }
+
+        // Adicionar evento para os botões "Selecionar todos"
+        elements.modalContent.querySelectorAll('.btn-selecionar-todos').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const artistaId = this.getAttribute('data-artista-id');
+                const titulosList = elements.modalContent.querySelector(`.titulos-list[data-artista-id="${artistaId}"]`);
+                
+                titulosList.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+                
+                this.innerHTML = '<i class="fas fa-check-circle mr-1"></i> Todos selecionados!';
+                this.classList.remove('bg-indigo-600');
+                this.classList.add('bg-green-600');
+                
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-check-square mr-1"></i> Selecionar todos';
+                    this.classList.remove('bg-green-600');
+                    this.classList.add('bg-indigo-600');
+                }, 1500);
+            });
+        });
+    }
+
+    async function carregarModalPercentualTitulos(artistasIds) {
+        elements.modalPercentualContent.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+        let hasContent = false;
+
+        // Pré-verificação de títulos selecionados
+        const hasSelectedTitles = artistasIds.some(artistaId => 
+            state.titulosSelecionados[artistaId]?.length > 0
+        );
+        
+        if (!hasSelectedTitles) {
+            elements.modalPercentualContent.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-4"></i>
+                    <p class="text-gray-700">Nenhum título selecionado</p>
+                    <p class="text-sm text-gray-500 mt-2">Selecione títulos em "Gerenciar Títulos"</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Iterar sobre os artistas selecionados e seus títulos JÁ SELECIONADOS
+        for (const artistaId of artistasIds) {
+            const titulosParaPercentual = state.titulosSelecionados[artistaId] || [];
+            if (titulosParaPercentual.length === 0) continue;
+
+            hasContent = true;
+            const artistaOption = Array.from(elements.artistSelect.options)
+                .find(opt => opt.value === artistaId);
+            const artistaNome = artistaOption?.textContent || `Artista ${artistaId}`;
+
+            const artistaSection = document.createElement('div');
+            artistaSection.className = 'mb-6 border-b pb-4';
+            artistaSection.innerHTML = `
+                <h4 class="font-semibold text-lg text-indigo-800 mb-3">${artistaNome}</h4>
+                <div class="grid grid-cols-1 gap-3" data-artista-id="${artistaId}"></div>
+            `;
+            
+            const titulosContainer = artistaSection.querySelector('.grid');
+            
+            titulosParaPercentual.forEach(titulo => { // Usar diretamente os títulos selecionados
+                const tituloDiv = document.createElement('div');
+                tituloDiv.className = 'flex items-center justify-between p-3 border border-gray-200 rounded-md bg-gray-50';
+                
+                // Usa o próprio título como identificador
+                tituloDiv.innerHTML = `
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900">${titulo}</p>
+                    </div>
+                    <div class="w-28 flex items-center gap-2">
+                        <input type="number" 
+                               class="percentual-input"
+                               placeholder="0.00"
+                               step="0.01"
+                               min="0"
+                               max="100"
+                               data-titulo-id="${titulo}"
+                               value="${state.percentuaisPorTitulo[titulo] || ''}">
+                        <span class="text-gray-500">%</span>
+                    </div>
+                `;
+                titulosContainer.appendChild(tituloDiv);
+            });
+            
+            fragment.appendChild(artistaSection);
+        }
+
+        if (!hasContent) {
+            elements.modalPercentualContent.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-4"></i>
+                    <p class="text-gray-700">Nenhum título selecionado</p>
+                    <p class="text-sm text-gray-500 mt-2">Selecione títulos em "Gerenciar Títulos"</p>
+                </div>
+            `;
+        } else {
+            elements.modalPercentualContent.appendChild(fragment);
+        }
+    }
+
+    // =================================================================
+    // 6. Funções de manipulação de dados
+    // =================================================================
+    function formatarValoresTabelaArtistas() {
+        document.querySelectorAll('#artistsTableBody .valor-formatado').forEach(td => {
+            const texto = td.textContent.trim();
+            if (texto !== '—' && texto !== '') {
+                const moeda = texto.charAt(0);
+                // Ajustado para parsear corretamente o valor com vírgula como separador decimal
+                const valor = parseFloat(texto.substring(1).trim().replace(',', '.'));
+                if (!isNaN(valor)) {
+                    td.textContent = moeda + ' ' + formatarNumero(valor, '', 2); // Mantém 2 casas para esta tabela
+                }
+            }
+        });
+    }
+
+    function preencherTabelaRelatorio(dados) {
+        elements.relatorioBody.innerHTML = '';
+        
+        if (!Array.isArray(dados)) {
+            console.error("Dados não são um array:", dados);
+            elements.relatorioBody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-red-500">Erro: Formato de dados inválido</td></tr>';
+            return;
+        }
+
+        // Não agrupa mais aqui, apenas exibe os dados já agregados do backend
+        dados.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.artista}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.ano}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.titulo}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-lucro="${item.lucro_liquido}">
+                    €${formatarNumero(parseFloat(item.lucro_liquido), '', 4)}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 percentual">0%</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 aplicado">€0,0000</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 convertido">R$0,00</td>
+            `;
+            elements.relatorioBody.appendChild(row);
+        });
+
+        // Os totais serão calculados e exibidos pelo calculateValores()
+        // Limpa os totais para que calculateValores() os preencha
+        elements.totalLucro.textContent = '€0,0000';
+        elements.totalAplicado.textContent = '€0,0000';
+        elements.totalConvertido.textContent = 'R$0,00';
+    }
+
+    function calcularValores() {
+        const percentualGeralInput = elements.percentageInput.value.replace(',', '.');
+        if (!percentualGeralInput) {
+            alert('Por favor, informe o percentual geral');
+            return;
+        }
+        
+        const percentualGeral = parseFloat(percentualGeralInput);
+        if (isNaN(percentualGeral) || percentualGeral < 0 || percentualGeral > 100) {
+            alert('Percentual geral inválido (deve ser entre 0 e 100)');
+            return;
+        }
+        
+        const cotacaoSelect = elements.exchangeRate;
+        const cotacaoValorStr = cotacaoSelect.options[cotacaoSelect.selectedIndex].value.replace(',', '.');
+        const cotacao = parseFloat(cotacaoValorStr);
+        if (isNaN(cotacao)) {
+            alert('Cotação inválida');
+            return;
+        }
+        
+        let totalAplicado = 0;
+        let totalConvertido = 0;
+        let totalLucroLiquidoCalculado = 0; // Para somar o lucro líquido total exibido
+
+        const linhas = elements.relatorioBody.querySelectorAll('tr');
+        linhas.forEach(linha => {
+            const colLucro = linha.cells[3];
+            const colPercentual = linha.cells[4];
+            const colAplicado = linha.cells[5];
+            const colConvertido = linha.cells[6];
+            const tituloDaLinha = linha.cells[2].textContent;
+            
+            const lucro = parseFloat(colLucro.dataset.lucro);
+            totalLucroLiquidoCalculado += lucro; // Soma o lucro líquido de cada linha
+
+            const percentualAplicar = state.percentuaisPorTitulo[tituloDaLinha] !== undefined 
+                                      ? state.percentuaisPorTitulo[tituloDaLinha] 
+                                      : percentualGeral;
+            
+            const aplicado = lucro * (percentualAplicar / 100);
+            const convertido = aplicado * cotacao;
+            
+            colPercentual.textContent = percentualAplicar.toFixed(2).replace('.', ',') + '%';
+            colAplicado.textContent = formatarNumero(aplicado, '€', 4); // 4 casas decimais
+            colConvertido.textContent = formatarNumero(convertido, 'R$', 2); // 2 casas decimais
+            
+            totalAplicado += aplicado;
+            totalConvertido += convertido;
+        });
+        
+        elements.totalLucro.textContent = formatarNumero(totalLucroLiquidoCalculado, '€', 4); // 4 casas decimais
+        elements.totalAplicado.textContent = formatarNumero(totalAplicado, '€', 4); // 4 casas decimais
+        elements.totalConvertido.textContent = formatarNumero(totalConvertido, 'R$', 2); // 2 casas decimais
+    }
+
+    // =================================================================
+    // 7. Event Listeners
+    // =================================================================
+    if (elements.inputBusca && elements.linhasTabela.length > 0) {
+        elements.inputBusca.addEventListener("input", debounce(function() {
+            const termo = normalizarTexto(this.value);
+            if (elements.loadingIndicator) elements.loadingIndicator.style.display = 'block';
+
+            setTimeout(() => {
+                elements.linhasTabela.forEach(linha => {
+                    const celulaArtista = linha.querySelector("td:first-child");
+                    if (!celulaArtista) return;
+                    
+                    const nomeArtista = normalizarTexto(celulaArtista.textContent);
+                    linha.style.display = nomeArtista.includes(termo) ? "" : "none";
+                });
+                
+                if (elements.loadingIndicator) elements.loadingIndicator.style.display = 'none';
+            }, 100);
+        }, 300));
+    }
+
+    if (elements.btnGerenciarTitulos) {
+        elements.btnGerenciarTitulos.addEventListener('click', function() {
+            const selectedOptions = Array.from(elements.artistSelect.selectedOptions);
+            if (selectedOptions.length === 0) {
+                alert('Por favor, selecione pelo menos um artista');
+                return;
+            }
+
+            const artistasSelecionados = selectedOptions.map(opt => ({
+                id: opt.value,
+                nome: opt.textContent
+            }));
+
+            carregarModalTitulos(artistasSelecionados);
+            elements.titulosModal.classList.remove('hidden');
+        });
+    }
+    
+    if (elements.btnPercentualTitulo) {
+        elements.btnPercentualTitulo.addEventListener('click', function() {
+            const artistasSelecionados = Array.from(elements.artistSelect.selectedOptions).map(opt => opt.value);
+            if (artistasSelecionados.length === 0) {
+                alert('Por favor, selecione pelo menos um artista');
+                return;
+            }
+            
+            // Passa os IDs dos artistas selecionados para carregar os títulos correspondentes
+            carregarModalPercentualTitulos(artistasSelecionados);
+            elements.percentualTituloModal.classList.remove('hidden');
+        });
+    }
+
+    // Fechar modais
+    if (elements.btnFecharModal) elements.btnFecharModal.addEventListener('click', fecharModal);
+    if (elements.btnCancelarModal) elements.btnCancelarModal.addEventListener('click', fecharModal);
+    if (elements.btnFecharPercentualModal) elements.btnFecharPercentualModal.addEventListener('click', fecharModalPercentual);
+    if (elements.btnCancelarPercentualModal) elements.btnCancelarPercentualModal.addEventListener('click', fecharModalPercentual);
+
+    // Salvar seleção de títulos
+    if (elements.btnSalvarModal) {
+        elements.btnSalvarModal.addEventListener('click', function() {
+            const sections = elements.modalContent.querySelectorAll('[data-artista-id]');
+            
+            sections.forEach(section => {
+                const artistaId = section.getAttribute('data-artista-id');
+                const titulosIds = []; // Agora são strings de títulos
+                
+                section.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                    titulosIds.push(checkbox.value);
+                });
+                
+                state.titulosSelecionados[artistaId] = titulosIds;
+            });
+            
+            fecharModal();
+            alert('Seleção de títulos salva com sucesso!');
+        });
+    }
+    
+    // Salvar percentuais por título
+    if (elements.btnSalvarPercentualModal) {
+        elements.btnSalvarPercentualModal.addEventListener('click', function() {
+            const inputs = elements.modalPercentualContent.querySelectorAll('.percentual-input');
+            
+            inputs.forEach(input => {
+                const titulo = input.getAttribute('data-titulo-id'); // Agora é a string do título
+                const valor = input.value.trim().replace(',', '.'); // Substitui vírgula por ponto
+                
+                if (valor === '') {
+                    delete state.percentuaisPorTitulo[titulo];
+                } else {
+                    const percentual = parseFloat(valor);
+                    if (!isNaN(percentual)) {
+                        state.percentuaisPorTitulo[titulo] = percentual;
+                    }
+                }
+            });
+            
+            fecharModalPercentual();
+            alert('Percentuais por título salvos com sucesso!');
+        });
+    }
+
+    // Avançar Relatório
+    if (elements.nextButton) {
+        elements.nextButton.addEventListener('click', function () {
+            const selectedOptions = Array.from(elements.artistSelect.selectedOptions);
+            if (selectedOptions.length === 0) {
+                alert('Por favor, selecione pelo menos um artista');
+                return;
+            }
+
+            const artistasNomes = selectedOptions.map(opt => opt.textContent);
+            const selectedArtistName = artistasNomes.join(', ');
+            document.getElementById('selectedArtist').textContent = selectedArtistName;
+
+            const startYear = elements.startYear.value;
+            const startMonth = elements.startMonth.value;
+            const endYear = elements.endYear.value;
+            const endMonth = elements.endMonth.value;
+
+            // Validar período
+            const periodoInicio = parseInt(startYear) * 100 + parseInt(startMonth);
+            const periodoFim = parseInt(endYear) * 100 + parseInt(endMonth);
+            
+            if (periodoInicio > periodoFim) {
+                alert("Período final deve ser após período inicial");
+                return;
+            }
+
+            // Atualizar período no cabeçalho
+            const meses = [
+                "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+                "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+            ];
+            const periodo = `Período selecionado: ${meses[parseInt(startMonth)-1]}/${startYear} a ${meses[parseInt(endMonth)-1]}/${endYear}`;
+            document.getElementById('periodoRelatorio').textContent = periodo;
+
+            // Coletar todos os títulos selecionados de todos os artistas
+            let todosTitulosSelecionados = [];
+            for (const artistaId in state.titulosSelecionados) {
+                todosTitulosSelecionados = todosTitulosSelecionados.concat(state.titulosSelecionados[artistaId]);
+            }
+            // Remover duplicatas
+            todosTitulosSelecionados = [...new Set(todosTitulosSelecionados)];
+
+            if (todosTitulosSelecionados.length === 0) {
+                alert('Por favor, selecione pelo menos um título para os artistas selecionados.');
+                return;
+            }
+
+            // Criar payload para a nova API
+            const payload = {
+                artistas: artistasNomes, // Envia os nomes dos artistas
+                titulos: todosTitulosSelecionados,
+                ano_inicial: parseInt(startYear),
+                mes_inicial: parseInt(startMonth),
+                ano_final: parseInt(endYear),
+                mes_final: parseInt(endMonth)
+            };
+
+            elements.loadingIndicator.style.display = 'block'; // Mostra o indicador de carregamento
+
+            fetch("/api/relatorio_retroativo", { // Chama o novo endpoint de API
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCSRFToken()
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                elements.loadingIndicator.style.display = 'none'; // Esconde o indicador de carregamento
+                if (!res.ok) {
+                    return res.json().then(err => { throw new Error(err.erro || `Erro HTTP! status: ${res.status}`) });
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (!data.dados || !Array.isArray(data.dados)) {
+                    console.error("Formato de dados inválido:", data);
+                    alert("Erro: formato de dados inesperado recebido do servidor");
+                    return;
+                }
+
+                const relatorio = data.dados;
+                preencherTabelaRelatorio(relatorio); 
+                document.getElementById('step1').classList.add('hidden');
+                document.getElementById('step2').classList.remove('hidden');
+                calcularValores(); // Chama calcularValores para preencher os totais e aplicar percentuais
+            })
+            .catch(err => {
+                elements.loadingIndicator.style.display = 'none'; // Esconde o indicador de carregamento em caso de erro
+                alert("Erro ao carregar dados do relatório: " + err.message);
+            });
+        });
+    }
+
+    // Voltar Relatório
+    if (elements.backButton) {
+        elements.backButton.addEventListener('click', function () {
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step1').classList.remove('hidden');
+        });
+    }
+
+    // Evento para botão Calcular
+    if (elements.calculateButton) {
+        elements.calculateButton.addEventListener('click', calcularValores);
+    }
+
+    // Função global para preparar o formulário
+    window.prepararFormulario = function(event) {
+        const selectedOptions = Array.from(elements.artistSelect.selectedOptions);
+        
+        if (selectedOptions.length === 0) {
+            alert("Nenhum artista selecionado.");
+            event.preventDefault();
+            return false;
+        }
+
+        const artistasNomes = selectedOptions.map(opt => opt.textContent);
+        const percentual = elements.percentageInput.value;
+        const cotacaoSelect = elements.exchangeRate;
+        const cotacaoId = cotacaoSelect.options[cotacaoSelect.selectedIndex].dataset.id;
+        const startYear = elements.startYear.value;
+        const startMonth = elements.startMonth.value;
+        const endYear = elements.endYear.value;
+        const endMonth = elements.endMonth.value;
+        
+        // Coleta os títulos diretamente da tabela de relatório que está na tela
+        const todosTitulosParaExportacao = [];
+        const linhasRelatorio = document.querySelectorAll('#relatorioBody tr'); // Pega todas as linhas da tabela
+        linhasRelatorio.forEach(linha => {
+            // A célula do título é a terceira coluna (índice 2)
+            const titulo = linha.cells[2].textContent.trim();
+            todosTitulosParaExportacao.push(titulo);
+        });
+
+        // USAR JSON.stringify PARA MANTER NOMES COM VÍRGULA
+        document.getElementById('percentualHidden').value = percentual;
+        document.getElementById('cotacaoIdHidden').value = cotacaoId;
+        document.getElementById('anoInicialHidden').value = startYear;
+        document.getElementById('mesInicialHidden').value = startMonth;
+        document.getElementById('anoFinalHidden').value = endYear;
+        document.getElementById('mesFinalHidden').value = endMonth;
+        document.getElementById('artistasHidden').value = JSON.stringify(artistasNomes); // Array como JSON
+        document.getElementById('titulosHidden').value = JSON.stringify(todosTitulosParaExportacao); // Array como JSON
+        document.getElementById('percentuaisTitulosHidden').value = JSON.stringify(state.percentuaisPorTitulo);
+
+        return true;
+    };
+
+    // Clique em linha da tabela marca artista
+    document.querySelectorAll('#artistsTableBody tr').forEach(row => {
+        row.addEventListener('click', function() {
+            const artistaId = this.getAttribute('data-artista-id');
+            const option = Array.from(elements.artistSelect.options).find(opt => opt.value === artistaId);
+
+            if (option) {
+                option.selected = !option.selected;
+                this.classList.toggle('bg-indigo-100');
+            }
+        });
+    });
+
+    // =================================================================
+    // 8. Inicialização
+    // =================================================================
+    function init() {
+        formatarValoresTabelaArtistas();
+        
+        // Inicializa seleção visual de artistas
+        Array.from(elements.artistSelect.options).forEach(option => {
+            if (option.selected) {
+                const row = document.querySelector(`#artistsTableBody tr[data-artista-id="${option.value}"]`);
+                if (row) row.classList.add('bg-indigo-100');
+            }
+        });
+    }
+
+    init();
+});
+</script>
+{% endblock %}

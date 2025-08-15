@@ -1,0 +1,82 @@
+{% set usar_tailwind = true %}
+{% extends 'base.html' %}
+
+
+{% block title %}Gerenciamento de Usuários - PolyMusic{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center p-4 border-b">
+            <div class="text-sm text-gray-600 mb-2 md:mb-0">
+                Mostrando <span class="font-bold">1</span> a <span class="font-bold">{{ usuarios|length }}</span> de <span class="font-bold">{{ usuarios|length }}</span> usuários
+            </div>
+            <div class="flex space-x-2">
+                <a href="{{ url_for('novo_usuario') }}" class="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-sm font-medium transition duration-300">
+                    <i class="fas fa-plus mr-2"></i> Novo Usuário
+                </a>
+                <button class="flex items-center bg-white hover:bg-gray-100 border border-gray-300 text-gray-700 px-4 py-2 rounded text-sm font-medium transition duration-300">
+                    <i class="fas fa-file-export mr-2"></i> Exportar
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome / Função</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">E-mail</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data criação</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for user in usuarios %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    {% set tipo = user.tipo_avatar if user.tipo_avatar else 'iniciais' %}
+                                    {% if tipo == 'rosto' %}
+                                        <img class="h-10 w-10 rounded-full" src="https://api.dicebear.com/7.x/avataaars/svg?seed={{ user.nome | urlencode }}" alt="avatar rosto">
+                                    {% else %}
+                                        <img class="h-10 w-10 rounded-full" src="https://api.dicebear.com/7.x/initials/svg?seed={{ user.nome | urlencode }}" alt="avatar iniciais">
+                                    {% endif %}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ user.nome }}</div>
+                                    <div class="text-sm text-gray-500">{{ user.funcao or 'Usuário' }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.email }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.funcao }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ user.data_criacao.strftime('%d/%m/%Y') }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ 'bg-green-100 text-green-800' if user.ativo else 'bg-red-100 text-red-800' }}">
+                                {{ 'Ativo' if user.ativo else 'Inativo' }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{{ url_for('editar_usuario', usuario_id=user.id) }}" class="text-indigo-600 hover:text-indigo-900 mr-3" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('excluir_usuario', usuario_id=user.id) }}" style="display:inline;">
+                                <button type="submit" class="text-red-600 hover:text-red-900" title="Excluir" onclick="return confirm('Tem certeza que deseja excluir este usuário?')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-gray-500 py-6">Nenhum usuário encontrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

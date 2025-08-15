@@ -1,0 +1,249 @@
+{% set usar_tailwind = true %}
+{% extends 'base.html' %}
+
+{% block title %}Exportar Royalties{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/exportar_planilhas.css') }}">
+<style>
+    /* Fix for box-shadow overflow issue */
+    .container-exportar {
+        padding: 2rem 1rem;
+        position: relative;
+    }
+    
+    /* Adjust the card container to prevent shadow bleeding */
+    .container-exportar > .bg-white {
+        margin: 0 auto;
+        max-width: calc(100% - 2px); /* Prevents shadow clipping */
+    }
+    
+    /* Style for report options cards */
+    #reportOptions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        max-height: 20rem;
+        overflow-y: auto;
+        padding: 0.5rem;
+    }
+    
+    .report-card {
+        flex: 1 1 calc(50% - 1rem);
+        min-width: 200px;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .report-card:hover {
+        border-color: #c7d2fe;
+        background-color: #f8fafc;
+    }
+    
+    .report-card.selected {
+        border-color: #8b5cf6;
+        background-color: #f5f3ff;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 640px) {
+        .report-card {
+            flex: 1 1 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Adicione dentro do step2, logo abaixo do <div id="reportOptions"> -->
+<div class="container-exportar px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8 text-center fade-in">
+        <h1 class="text-3xl font-bold text-indigo-700 mb-2">
+            <i class="fas fa-file-export mr-2"></i>Exportar Royalties
+        </h1>
+        <p class="text-gray-600">Selecione o artista e o tipo de relatório para exportar</p>
+    </div>
+
+    <!-- Card Container -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden fade-in max-w-4xl mx-auto">
+        <!-- Steps Progress -->
+        <div class="flex items-center p-4 border-b">
+            <div class="flex-1 flex items-center">
+                <div class="step-indicator w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center mr-2" data-step="1">
+                    1
+                </div>
+                <p class="text-indigo-600 font-medium">Selecionar Artista</p>
+            </div>
+            <div class="h-1 w-8 bg-gray-200 mx-2"></div>
+            <div class="flex-1 flex items-center">
+                <div class="step-indicator w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-2" data-step="2">
+                    2
+                </div>
+                <p class="text-gray-500 font-medium">Selecionar Relatório</p>
+            </div>
+            <div class="h-1 w-8 bg-gray-200 mx-2"></div>
+            <div class="flex-1 flex items-center">
+                <div class="step-indicator w-8 h-8 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center mr-2" data-step="3">
+                    3
+                </div>
+                <p class="text-gray-500 font-medium">Exportar</p>
+            </div>
+        </div>
+
+        <!-- Form Content -->
+        <div class="p-6">
+            <!-- Step 1: Artist Selection -->
+            <div class="step" id="step1">
+                <div class="mb-4 text-lg font-semibold text-gray-700">Selecione o Artista</div>
+
+                <input type="text" id="artistSearch" class="mb-4 w-full border rounded p-2" placeholder="Buscar artista...">
+
+                <div id="artistOptions" class="flex flex-wrap justify-center gap-4 max-h-80 overflow-y-auto custom-scrollbar py-4">
+                    <!-- Aqui o JS vai inserir os cards dos artistas -->
+                </div>
+            </div>
+
+            <!-- Step 2: Report Selection -->
+            <div id="step2" class="step-section mb-8 hidden" data-step="2">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+                    <i class="fas fa-chart-line mr-2 text-indigo-500"></i> Selecione o Relatório
+                </h2>
+
+                <div id="reportOptions" class="flex flex-wrap gap-4 custom-scrollbar">
+                    <!-- Report options will be loaded dynamically as cards -->
+                </div>
+
+                <!-- Novo bloco de seleção de planilha adicionado aqui -->
+    <div class="mt-6 px-4">
+        <label for="planilhaSelect" class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-table mr-1 text-indigo-500"></i> Selecione a Planilha Importada
+        </label>
+
+        {% if planilhas %}
+            <select id="planilhaSelect" name="planilha_id" class="w-full border rounded px-3 py-2">
+                <option value="">-- Escolha uma planilha --</option>
+                {% for planilha in planilhas %}
+                    <option value="{{ planilha.id }}">{{ planilha.nome_original }}</option>
+                {% endfor %}
+            </select>
+        {% else %}
+            <p class="text-red-500">Nenhuma planilha importada encontrada.</p>
+        {% endif %}
+    </div>
+
+
+
+                <!-- Date Range Selection -->
+                <div class="mt-6 border-t pt-4 hidden" id="dateRangeSection">
+                    <h3 class="font-medium text-gray-700 mb-3 flex items-center">
+                        <i class="fas fa-calendar-alt mr-2 text-indigo-500"></i> Período
+                    </h3>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="flex-1">
+                            <label for="startDate" class="block text-sm font-medium text-gray-700 mb-1">Data Inicial</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <i class="fas fa-calendar-day text-gray-400"></i>
+                                </div>
+                                <input type="date" id="startDate" class="pl-10 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <label for="endDate" class="block text-sm font-medium text-gray-700 mb-1">Data Final</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <i class="fas fa-calendar-day text-gray-400"></i>
+                                </div>
+                                <input type="date" id="endDate" class="pl-10 w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 3: Confirmation -->
+            <div id="step3" class="step-section hidden" data-step="3">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-check text-green-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-green-700 mb-2">Pronto para exportar!</h3>
+                    <p class="text-gray-700 mb-6">Confira os detalhes abaixo antes de prosseguir</p>
+
+                    <div class="bg-white rounded-lg border p-4 max-w-md mx-auto text-left" id="confirmationDetails">
+                        <!-- Confirmation details will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Export Options -->
+                <div class="mt-6 border-t pt-6">
+                    <h3 class="font-medium text-gray-700 mb-4 flex items-center justify-center">
+                        <i class="fas fa-download mr-2 text-indigo-500"></i> Escolha o formato de exportação
+                    </h3>
+                    <div class="flex flex-wrap justify-center gap-4">
+                        <button class="export-format px-4 py-2 border rounded-lg flex items-center hover:bg-gray-50" data-format="xlsx">
+                            <i class="fas fa-file-excel text-green-600 text-xl mr-2"></i>
+                            <span>Excel (.xlsx)</span>
+                        </button>
+                        <button class="export-format px-4 py-2 border rounded-lg flex items-center hover:bg-gray-50" data-format="csv">
+                            <i class="fas fa-file-csv text-blue-600 text-xl mr-2"></i>
+                            <span>CSV (.csv)</span>
+                        </button>
+                        <button class="export-format px-4 py-2 border rounded-lg flex items-center hover:bg-gray-50" data-format="pdf">
+                            <i class="fas fa-file-pdf text-red-600 text-xl mr-2"></i>
+                            <span>PDF (.pdf)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer with Navigation Buttons -->
+        <div class="bg-gray-50 px-6 py-4 flex justify-between border-t">
+            <button id="btnBack" class="px-5 py-2 border rounded-lg text-gray-700 hover:bg-gray-100 hidden">
+                <i class="fas fa-arrow-left mr-2"></i>Voltar
+            </button>
+            <button id="btnNext" class="ml-auto px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                Próximo<i class="fas fa-arrow-right ml-2"></i>
+            </button>
+            <button id="btnExport" class="ml-auto px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 hidden">
+                <i class="fas fa-file-export mr-2"></i>Exportar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 transform transition-all fade-in">
+        <div class="text-center">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check text-green-600 text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-2">Exportação concluída!</h3>
+            <p class="text-gray-600 mb-6">O arquivo foi gerado com sucesso e está pronto para download.</p>
+
+            <div class="flex justify-center gap-4">
+                <button id="modalClose" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Fechar
+                </button>
+                <button id="downloadNow" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                    <i class="fas fa-download mr-2"></i>Baixar agora
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="{{ url_for('static', filename='js/exportar_planilhas.js') }}"></script>
+{% endblock %}
+

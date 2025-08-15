@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Cálculos Especiais</h2>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- Artistas -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Artistas Cadastrados</h4>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalNovoArtista">Novo Artista</button>
+  </div>
+
+  {% for artista in artistas if artista.tipo == 'especial' %}
+    <div class="card mb-2">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <strong>{{ artista.nome }}</strong>
+        <div>
+          <button class="btn btn-sm btn-info" onclick="carregarDetalhesArtista({{ artista.id }})">Detalhes</button>
+          <button class="btn btn-sm btn-warning" onclick="carregarEdicaoArtista({{ artista.id }})">Editar</button>
+          <form method="POST" action="{{ url_for('excluir_artista_especial', artista_id=artista.id) }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+
+<!-- Modal Novo Artista -->
+<div class="modal fade" id="modalNovoArtista" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('cadastrar_artista_especial') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="modal-header">
+          <h5 class="modal-title">Novo Artista</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Nome e Variações -->
+          <div class="mb-3">
+            <label class="form-label">Nome</label>
+            <input type="text" name="nome" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Variações (uma por linha)</label>
+            <div id="variacoesContainer"></div>
+            <button type="button" id="btnAdicionarVariacao" class="btn btn-outline-secondary btn-sm mt-2">Adicionar Variação</button>
+          </div>
+
+          <!-- Títulos e Percentuais -->
+          <div class="mb-3">
+            <label class="form-label">Títulos e Percentuais</label>
+            <div class="d-flex gap-2 mb-2">
+              <button type="button" class="btn btn-outline-primary btn-sm" id="btnAdicionarTitulo">Adicionar Título</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#collapseAvulsos">Títulos Avulsos</button>
+            </div>
+
+            <!-- Container para os títulos inseridos -->
+            <div id="novosTitulosContainer"></div>
+
+            <!-- Área de colagem para títulos em massa -->
+            <div class="collapse mt-3" id="collapseAvulsos">
+              <div class="card card-body">
+                <div class="mb-2">
+                  <label class="form-label">Cole os títulos (um por linha):</label>
+                  <textarea id="titulosAvulsos" class="form-control" rows="5" placeholder="Ex: Título 1\nTítulo 2\nTítulo 3"></textarea>
+                </div>
+                <div class="row">
+                  <div class="col-md-6">
+                    <label class="form-label">Percentual para todos</label>
+                    <input type="number" step="0.01" id="percentualAvulso" class="form-control" placeholder="%">
+                  </div>
+                  <div class="col-md-6 d-flex align-items-end">
+                    <button type="button" id="btnAdicionarTitulosAvulsos" class="btn btn-primary w-100">Adicionar Todos</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rodapé -->
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Salvar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+  <!-- Modal Detalhes -->
+  <div class="modal fade" id="modalDetalhesArtista" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Detalhes do Artista</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body" id="detalhesArtistaBody">Carregando...</div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar -->
+  <div class="modal fade" id="modalEditarArtista" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content" id="editarArtistaContent">Carregando...</div>
+    </div>
+  </div>
+
+<!-- Formulário de cálculo -->
+<form method="POST" action="{{ url_for('calculos_especiais') }}" class="card p-4 mb-4">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="row g-3">
+    <div class="col-md-4">
+      <label class="form-label">Artista</label>
+      <select name="artista_calculo" class="form-select" required>
+        <option value="">Selecione</option>
+        {% for artista in artistas if artista.tipo == 'especial' %}
+        <option value="{{ artista.id }}">{{ artista.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Planilha</label>
+      <select name="arquivo_id" class="form-select" required>
+        <option value="">Selecione</option>
+        {% for arquivo in arquivos %}
+        <option value="{{ arquivo.id }}">{{ arquivo.nome_arquivo }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Cotação</label>
+      <select name="cotacao_id" class="form-select" required>
+        <option value="">Selecione</option>
+        {% for cotacao in cotacoes %}
+        <option value="{{ cotacao.id }}">{{ cotacao.mes }}/{{ cotacao.ano }} - R$ {{ cotacao.valor }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="row mt-3">
+    <div class="col-md-6">
+      <label class="form-label">Mês do relatório</label>
+      <input type="text" name="mes" class="form-control" required>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Ano do relatório</label>
+      <input type="number" name="ano" class="form-control" value="{{ current_year }}" required>
+    </div>
+  </div>
+  <div class="text-end mt-3">
+    <button type="submit" class="btn btn-warning">Calcular</button>
+  </div>
+</form>
+
+  {% if resultados_detalhados %}
+  <div class="card p-3 bg-light">
+    <h5 class="mb-3">Resultados Totais por Título</h5>
+    <ul>
+      {% for item in resultados_detalhados %}
+      <li><strong>{{ item['titulo'] }}</strong>: € {{ '%.4f'|format(item['valor_eur']) }} | R$ {{ '%.2f'|format(item['valor_brl']) }}</li>
+      {% endfor %}
+    </ul>
+    <form method="POST" action="{{ url_for('salvar_calculo_especial') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="dados" value='{{ dados_salvar|tojson }}'>
+      <div class="text-end">
+        <button type="submit" class="btn btn-success">Salvar Cálculo</button>
+        <a href="{{ url_for('calculos_especiais') }}" class="btn btn-secondary">Descartar</a>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+
+  <!-- Histórico -->
+  <h4 class="mt-4">Histórico de Cálculos</h4>
+  <form method="GET" class="row g-2 mb-3">
+    <div class="col-md-3">
+      <select name="filtro_artista" class="form-select">
+        <option value="">Todos os artistas</option>
+        {% for artista in artistas %}
+        <option value="{{ artista.nome }}">{{ artista.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <input type="text" name="filtro_mes" class="form-control" placeholder="Mês">
+    </div>
+    <div class="col-md-2">
+      <input type="number" name="filtro_ano" class="form-control" placeholder="Ano">
+    </div>
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-outline-primary w-100">Filtrar</button>
+    </div>
+    <div class="col-md-3 text-end">
+      <a href="{{ url_for('exportar_calculo_especial') }}" class="btn btn-success w-100">Exportar Resultados</a>
+    </div>
+  </form>
+
+  {% if historico %}
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Data/Hora</th>
+        <th>Artista</th>
+        <th>Arquivo</th>
+        <th>Mês/Ano</th>
+        <th>€</th>
+        <th>R$</th>
+        <th>Cotação</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in historico %}
+      <tr>
+        <td>{{ item.data_calculo.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+        <td>{{ item.artista }}</td>
+        <td>{{ item.arquivo.nome_arquivo if item.arquivo else 'Removido' }}</td>
+        <td>{{ item.mes }}/{{ item.ano }}</td>
+        <td>€ {{ '%.4f'|format(item.valor_eur) }}</td>
+        <td>R$ {{ '%.2f'|format(item.valor_brl) }}</td>
+        <td>{{ '%.4f'|format(item.cotacao) }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('excluir_calculo_especial', id=item.id) }}" onsubmit="return confirm('Excluir este cálculo?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-danger">Excluir</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="alert alert-info">Nenhum cálculo encontrado.</div>
+  {% endif %}
+</div>
+
+<script>
+// Função para configurar os event listeners dos botões dinâmicos
+function configurarEventListeners() {
+  // Botão: Adicionar Variação
+  const variacoesBtn = document.getElementById("btnAdicionarVariacao");
+  if (variacoesBtn && !variacoesBtn._listenerAdded) {
+    variacoesBtn.addEventListener("click", function () {
+      const container = document.getElementById("variacoesContainer");
+      const div = document.createElement("div");
+      div.className = "input-group mb-2";
+      div.innerHTML = `
+        <input type="text" name="variacoes[]" class="form-control" placeholder="Nova variação">
+        <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">Excluir</button>
+      `;
+      container.appendChild(div);
+    });
+    variacoesBtn._listenerAdded = true;
+  }
+
+  // Botão: Adicionar Título Individual
+  const titulosBtn = document.getElementById("btnAdicionarTitulo");
+  if (titulosBtn && !titulosBtn._listenerAdded) {
+    titulosBtn.addEventListener("click", function () {
+      const container = document.getElementById("novosTitulosContainer");
+      const div = document.createElement("div");
+      div.className = "row mb-2";
+      div.innerHTML = `
+        <div class="col-7">
+          <input type="text" name="titulos[]" class="form-control" placeholder="Título" required>
+        </div>
+        <div class="col-3">
+          <input type="number" name="percentuais[]" class="form-control" step="0.01" placeholder="%" required>
+        </div>
+        <div class="col-2 text-end">
+          <button type="button" class="btn btn-outline-danger" onclick="this.closest('.row').remove()">Excluir</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+    titulosBtn._listenerAdded = true;
+  }
+
+  // Botão: Adicionar Títulos Avulsos
+  const avulsosBtn = document.getElementById("btnAdicionarTitulosAvulsos");
+  if (avulsosBtn && !avulsosBtn._listenerAdded) {
+    avulsosBtn.addEventListener("click", function () {
+      const textarea = document.getElementById("titulosAvulsos");
+      const percentual = document.getElementById("percentualAvulso").value;
+      const container = document.getElementById("novosTitulosContainer");
+
+      if (!textarea || !percentual || isNaN(percentual)) {
+        alert("Preencha corretamente os campos.");
+        return;
+      }
+
+      const linhas = textarea.value.split("\n").map(l => l.trim()).filter(l => l !== "");
+
+      if (linhas.length === 0) {
+        alert("Cole ao menos um título.");
+        return;
+      }
+
+      linhas.forEach(titulo => {
+        const div = document.createElement("div");
+        div.className = "row mb-2";
+        div.innerHTML = `
+          <div class="col-7">
+            <input type="text" name="titulos[]" class="form-control" value="${titulo}" required>
+          </div>
+          <div class="col-3">
+            <input type="number" name="percentuais[]" class="form-control" step="0.01" value="${percentual}" required>
+          </div>
+          <div class="col-2 text-end">
+            <button type="button" class="btn btn-outline-danger" onclick="this.closest('.row').remove()">Excluir</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+
+      // Limpa os campos após adicionar
+      textarea.value = '';
+      document.getElementById("percentualAvulso").value = '';
+    });
+    avulsosBtn._listenerAdded = true;
+  }
+}
+
+function carregarDetalhesArtista(id) {
+  fetch(`/artista_especial/detalhes/${id}`)
+    .then(res => {
+      if (!res.ok) throw new Error('Erro na requisição');
+      return res.json();
+    })
+    .then(data => {
+      // Verifica se os dados esperados existem
+      if (!data.nome || !Array.isArray(data.variacoes) || !Array.isArray(data.titulos)) {
+        throw new Error('Dados inválidos retornados');
+      }
+      
+      const variacoes = data.variacoes.length 
+        ? data.variacoes.map(v => `<li>${v}</li>`).join('')
+        : '<li>Nenhuma variação cadastrada</li>';
+      
+      const titulos = data.titulos.length
+        ? data.titulos.map(t => `<li>${t.titulo} (${t.percentual}%)</li>`).join('')
+        : '<li>Nenhum título cadastrado</li>';
+      
+      const html = `
+        <p><strong>Nome:</strong> ${data.nome}</p>
+        <p><strong>Variações:</strong><ul>${variacoes}</ul></p>
+        <p><strong>Títulos:</strong><ul>${titulos}</ul></p>
+      `;
+      document.getElementById('detalhesArtistaBody').innerHTML = html;
+      new bootstrap.Modal(document.getElementById('modalDetalhesArtista')).show();
+    })
+    .catch(error => {
+      console.error('Erro:', error);
+      document.getElementById('detalhesArtistaBody').innerHTML = `
+        <div class="alert alert-danger">
+          Erro ao carregar detalhes: ${error.message}
+        </div>`;
+      new bootstrap.Modal(document.getElementById('modalDetalhesArtista')).show();
+    });
+}
+
+function carregarEdicaoArtista(id) {
+  fetch(`/artista_especial/editar/${id}`)
+    .then(res => res.text())
+    .then(html => {
+      document.getElementById('editarArtistaContent').innerHTML = html;
+      configurarEventListeners(); // ativa os botões dentro do modal
+      new bootstrap.Modal(document.getElementById('modalEditarArtista')).show();
+    });
+}
+
+// Função para adicionar título (usada no botão fora do modal)
+function adicionarTitulo() {
+  const div = document.createElement('div');
+  div.className = 'row mb-2';
+  div.innerHTML = `
+    <div class="col-7">
+      <input type="text" name="titulos[]" class="form-control" placeholder="Título" required>
+    </div>
+    <div class="col-3">
+      <input type="number" name="percentuais[]" class="form-control" step="0.01" placeholder="%" required>
+    </div>
+    <div class="col-2 text-end">
+      <button type="button" class="btn btn-outline-danger" onclick="this.closest('.row').remove()">Excluir</button>
+    </div>
+  `;
+  document.getElementById('novosTitulosContainer').appendChild(div);
+}
+
+// Inicializa todos os event listeners ao carregar a página
+document.addEventListener("DOMContentLoaded", function () {
+  configurarEventListeners();
+});
+</script>
+
+{% endblock %}

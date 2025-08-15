@@ -1,0 +1,166 @@
+/* === Exportar Planilhas - CSS específico === */
+
+/* Container central */
+.container-exportar {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+/* Step Section */
+.step-section {
+    display: none;
+}
+.step-section[data-step="1"] {
+    display: block;
+}
+
+/* Fade In */
+.fade-in {
+    animation: fadeIn 0.3s ease-out forwards !important;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* === Reset de Botões só na Exportar === */
+.container-exportar .btn {
+    all: unset;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: #6366f1; /* Indigo */
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.container-exportar .btn:hover {
+    background-color: #4f46e5;
+}
+
+/* Botões Secundários (voltar) */
+.container-exportar #btnBack {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+.container-exportar #btnBack:hover {
+    background-color: #d1d5db;
+}
+
+/* Export format buttons */
+.container-exportar .export-format {
+    all: unset;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+    background-color: white;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.container-exportar .export-format:hover {
+    background-color: #f9fafb;
+    border-color: #a1a1aa;
+}
+
+/* Card override */
+.container-exportar .card {
+    all: unset;
+    background-color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+/* Modal override */
+.container-exportar .modal-content {
+    all: unset;
+    background-color: white;
+    border-radius: 0.75rem;
+    padding: 2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    margin: auto;
+}
+
+/* Inputs override */
+.container-exportar input[type="text"],
+.container-exportar input[type="number"],
+.container-exportar input[type="date"],
+.container-exportar select,
+.container-exportar textarea {
+    all: unset;
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    background-color: white;
+    font-size: 1rem;
+    color: #374151;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+    border: 3px solid rgba(0, 0, 0, 0.1);
+    border-top: 3px solid #4f46e5;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+    display: inline-block;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Step Indicator */
+.container-exportar .step-indicator {
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+}
+
+.container-exportar .bg-white.rounded-xl.shadow-lg {
+    all: unset;
+    background-color: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 1rem;
+}

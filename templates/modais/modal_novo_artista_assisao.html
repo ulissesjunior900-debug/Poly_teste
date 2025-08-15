@@ -1,0 +1,120 @@
+<div class="modal-content">
+  <form method="POST" action="{{ url_for('cadastrar_artista_assisao') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+    <div class="modal-header">
+      <h5 class="modal-title">Novo Artista - Assisão</h5>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Nome e variações -->
+      <div class="mb-3">
+        <label class="form-label">Nome do Artista</label>
+        <input type="text" name="nome" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Variações (separadas por vírgula)</label>
+        <input type="text" name="variacoes" class="form-control" placeholder="Ex: Assis, A. Cavalcanti">
+      </div>
+
+      <!-- Cadastro em massa -->
+      <hr>
+      <label class="form-label">Títulos e Percentuais</label>
+      <div class="card mb-3">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">Títulos Avulsos com Mesmo Percentual</h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-2">
+            <label class="form-label">Cole os títulos (um por linha)</label>
+            <textarea class="form-control" id="titulosAssisaoEmMassa" rows="5" placeholder="Ex: Meu Forró Pé de Serra&#10;Arraiá da Poly"></textarea>
+          </div>
+          <div class="row">
+            <div class="col-md-4">
+              <label class="form-label">Percentual para todos (%)</label>
+              <input type="number" step="0.01" min="0" max="100" class="form-control" id="percentualAssisaoMassa" placeholder="%">
+            </div>
+            <div class="col-md-8 d-flex align-items-end">
+              <button type="button" class="btn btn-primary" onclick="adicionarTitulosAssisaoEmMassa()">Adicionar Todos</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cadastro individual -->
+      <div class="card">
+        <div class="card-header bg-light">
+          <h6 class="mb-0">Cadastro Individual</h6>
+        </div>
+        <div class="card-body">
+          <div id="titulosAssisaoContainer"></div>
+          <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="adicionarTituloAssisaoIndividual()">Adicionar Título Individual</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="submit" class="btn btn-success">Salvar</button>
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+    </div>
+  </form>
+</div>
+
+<script>
+function adicionarTitulosAssisaoEmMassa() {
+  const titulosText = document.getElementById('titulosAssisaoEmMassa').value;
+  const percentual = document.getElementById('percentualAssisaoMassa').value;
+
+  if (!titulosText.trim()) {
+    alert('Insira os títulos!');
+    return;
+  }
+
+  if (!percentual || isNaN(percentual) || percentual < 0 || percentual > 100) {
+    alert('Informe um percentual válido entre 0 e 100!');
+    return;
+  }
+
+  const titulos = titulosText.split('\n').filter(t => t.trim() !== '');
+  const container = document.getElementById('titulosAssisaoContainer');
+
+  titulos.forEach(titulo => {
+    const div = document.createElement('div');
+    div.className = 'row mb-2';
+    div.innerHTML = `
+      <div class="col-7">
+        <input type="text" name="titulos[]" class="form-control" value="${titulo.trim()}" required>
+      </div>
+      <div class="col-3">
+        <input type="number" name="percentuais[]" class="form-control" step="0.01" min="0" max="100" value="${percentual}" required>
+      </div>
+      <div class="col-2 text-end">
+        <button type="button" class="btn btn-outline-danger" onclick="this.closest('.row').remove()">Excluir</button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+
+  document.getElementById('titulosAssisaoEmMassa').value = '';
+  document.getElementById('percentualAssisaoMassa').value = '';
+}
+
+function adicionarTituloAssisaoIndividual() {
+  const container = document.getElementById('titulosAssisaoContainer');
+  const div = document.createElement('div');
+  div.className = 'row mb-2';
+  div.innerHTML = `
+    <div class="col-7">
+      <input type="text" name="titulos[]" class="form-control" placeholder="Título" required>
+    </div>
+    <div class="col-3">
+      <input type="number" name="percentuais[]" class="form-control" step="0.01" min="0" max="100" placeholder="%" required>
+    </div>
+    <div class="col-2 text-end">
+      <button type="button" class="btn btn-outline-danger" onclick="this.closest('.row').remove()">Excluir</button>
+    </div>
+  `;
+  container.appendChild(div);
+}
+</script>

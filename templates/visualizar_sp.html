@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h4>Editor de SP (Clique para adicionar campos)</h4>
+  <div class="position-relative" id="spContainer">
+    <img src="{{ imagem_url }}" id="spImagem" class="img-fluid" style="border: 1px solid #ccc;">
+    <!-- Campos serão adicionados dinamicamente com JS -->
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('spImagem').addEventListener('click', function(e) {
+  const img = e.target;
+  const rect = img.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'Campo';
+  input.style.position = 'absolute';
+  input.style.left = x + 'px';
+  input.style.top = y + 'px';
+  input.style.width = '120px';
+  input.classList.add('form-control', 'position-absolute', 'bg-light');
+
+  document.getElementById('spContainer').appendChild(input);
+});
+</script>
+{% endblock %}

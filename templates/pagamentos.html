@@ -1,0 +1,1244 @@
+{% extends 'base.html' %}
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamentos - Sistema Financeiro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<style>
+    /* Variáveis CSS */
+    :root {
+        --primary-color: #2c3e50;
+        --primary-dark: #1a252f;
+        --secondary-color: #3498db;
+        --accent-color: #2980b9;
+        --success-color: #27ae60;
+        --danger-color: #e74c3c;
+        --warning-color: #f39c12;
+        --light-color: #f8f9fa;
+        --dark-color: #212529;
+        --gray-light: #ecf0f1;
+        --border-radius: 8px;
+        --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --transition: all 0.3s ease;
+    }
+
+    /* Estilos globais e de componentes */
+    body {
+        background-color: #f5f7fa;
+        color: #34495e;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .card {
+        border: none;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        transition: var(--transition);
+        margin-bottom: 1.5rem;
+    }
+
+    .card:hover {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-header {
+        background-color: #f1f3f5;
+        font-weight: 600;
+        padding: 15px 20px;
+        border-top-left-radius: 10px !important;
+        border-top-right-radius: 10px !important;
+    }
+
+    .btn-primary {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--accent-color);
+        border-color: var(--accent-color);
+    }
+
+    .btn-success {
+        background-color: var(--success-color);
+        border-color: var(--success-color);
+    }
+
+    .section-title {
+        position: relative;
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--secondary-color);
+        color: var(--primary-color);
+        font-weight: 700;
+    }
+
+    .section-title::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 60px;
+        height: 2px;
+        background: var(--success-color);
+    }
+
+    .form-control, .form-select {
+        border-radius: var(--border-radius);
+        padding: 0.75rem 1rem;
+        border: 1px solid #dce1e6;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--secondary-color);
+        box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+    }
+
+    .summary-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--gray-light);
+    }
+
+    .summary-total {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--primary-color);
+        margin-top: 0.5rem;
+    }
+
+    .table-responsive {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+    }
+
+    .table th {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 600;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(52, 152, 219, 0.05);
+    }
+
+    .badge-status {
+        padding: 0.4em 0.8em;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+
+    .badge-awaiting {
+        background-color: #d4edda !important;
+        color: #155724 !important;
+    }
+
+    .badge-paid {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .badge-scheduled {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .toggle-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 24px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background-color: var(--success-color);
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(26px);
+    }
+
+    .file-preview {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
+    }
+
+    .file-item {
+        background: var(--gray-light);
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .file-item .bi {
+        color: var(--danger-color);
+        cursor: pointer;
+    }
+
+    .modal-header {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .floating-button {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        background-color: var(--secondary-color);
+        color: white;
+        box-shadow: 0 6px 15px rgba(52, 152, 219, 0.4);
+        font-size: 1.5rem;
+        transition: var(--transition);
+    }
+
+    .floating-button:hover {
+        background-color: var(--accent-color);
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 8px 20px rgba(52, 152, 219, 0.5);
+    }
+
+    .loading {
+        position: relative;
+        pointer-events: none;
+        opacity: 0.7;
+    }
+
+    .loading::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+        to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    .calculation-card {
+        border-left: 4px solid var(--secondary-color);
+        transition: var(--transition);
+    }
+
+    .calculation-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .status-col {
+        width: 120px;
+    }
+
+    /* Scrollable tables */
+    .scrollable-table {
+        max-height: 300px;
+        overflow-y: auto;
+        display: block;
+    }
+
+    .scrollable-table thead {
+        position: sticky;
+        top: 0;
+        background-color: var(--primary-color);
+        z-index: 1;
+    }
+
+    /* Adjust layout spacing */
+    .container.py-4 {
+        padding-top: 1.5rem !important;
+    }
+
+    /* Custom adjustments */
+    .editor-sp-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .editor-sp-row {
+        flex: 1;
+    }
+
+    .calculos-container {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .historico-pagamentos {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .resumo-financeiro {
+        height: 100%;
+    }
+
+    .vencimento-container {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .vencimento-container .form-control {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .btn-agendar {
+        background-color: #6c757d;
+        border-color: #6c757d;
+        color: white;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+    }
+
+    .btn-agendar:hover {
+        background-color: #5a6268;
+        border-color: #545b62;
+    }
+
+    .btn-agendado {
+        background-color: #ffc107;
+        border-color: #ffc107;
+        color: #212529;
+    }
+
+    .btn-agendado:hover {
+        background-color: #e0a800;
+        border-color: #d39e00;
+    }
+
+    /* New styles for professional layout */
+    .resumo-profissional {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        padding: 1.5rem;
+        background: #fff;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+    }
+
+    .resumo-item {
+        display: flex;
+        flex-direction: column;
+        padding: 0.75rem 0;
+    }
+
+    .resumo-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .resumo-value {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .resumo-total {
+        grid-column: span 2;
+        background: var(--gray-light);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-top: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-left: 4px solid var(--success-color);
+    }
+
+    .resumo-total .resumo-label {
+        font-size: 1.1rem;
+    }
+
+    .resumo-total .resumo-value {
+        font-size: 1.4rem;
+        color: var(--success-color);
+    }
+
+    .resumo-divider {
+        grid-column: span 2;
+        height: 1px;
+        background: var(--gray-light);
+        margin: 0.5rem 0;
+    }
+
+    /* Estilos específicos para o histórico de pagamentos */
+    .historico-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background-color: white; /* Já estava aqui, mas é bom manter a ordem */
+        border-radius: var(--border-radius); /* Já estava aqui, mas é bom manter a ordem */
+        box-shadow: var(--box-shadow); /* Já estava aqui, mas é bom manter a ordem */
+        overflow: hidden; /* Já estava aqui, mas é bom manter a ordem */
+    }
+    
+    .historico-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        background-color: var(--primary-color);
+        color: white;
+        border-top-left-radius: var(--border-radius);
+        border-top-right-radius: var(--border-radius);
+    }
+    
+    .historico-header h3 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .total-pago-badge {
+        background-color: var(--success-color);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    .filtros-container {
+        padding: 15px;
+        background-color: var(--light-color);
+        border-bottom: 1px solid var(--gray-light);
+    }
+    
+    .filtros-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 10px;
+        align-items: end;
+    }
+    
+    .filtro-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .filtro-label {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--primary-color);
+        margin-bottom: 5px;
+    }
+    
+    .filtro-select {
+        padding: 8px 12px;
+        border-radius: var(--border-radius);
+        border: 1px solid #dce1e6;
+        background-color: white;
+        font-size: 0.9rem;
+    }
+    
+    .btn-filtrar {
+        padding: 8px 12px;
+        background-color: var(--secondary-color);
+        color: white;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 38px;
+    }
+    
+    .btn-filtrar:hover {
+        background-color: var(--accent-color);
+    }
+    
+    .mensagens-container {
+        padding: 0 15px;
+        margin-top: 10px;
+    }
+    
+    .alert {
+        padding: 8px 12px;
+        border-radius: 5px;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+    
+    .alert-info {
+        background-color: #e6f7ff;
+        border: 1px solid #91d5ff;
+        color: #096dd9;
+    }
+    
+    .alert-success {
+        background-color: #f6ffed;
+        border: 1px solid #b7eb8f;
+        color: #389e0d;
+    }
+    
+    .alert-warning {
+        background-color: #fffbe6;
+        border: 1px solid #ffe58f;
+        color: #d48806;
+    }
+    
+    .alert-danger {
+        background-color: #fff2f0;
+        border: 1px solid #ffccc7;
+        color: #cf1322;
+    }
+    
+    .btn-atualizar-container {
+        padding: 0 15px;
+        margin: 10px 0;
+    }
+    
+    .btn-atualizar {
+        width: 100%;
+        padding: 10px;
+        background-color: var(--warning-color);
+        color: var(--dark-color);
+        border: none;
+        border-radius: var(--border-radius);
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    
+    .btn-atualizar:hover {
+        background-color: #e0a800;
+    }
+    
+    .btn-atualizar:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+    
+    .tabela-container {
+        flex-grow: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        padding: 0 15px 15px;
+    }
+    
+    .tabela-scroll {
+        flex-grow: 1;
+        overflow-y: auto;
+        border: 1px solid var(--gray-light);
+        border-radius: var(--border-radius);
+    }
+    
+    .tabela-historico {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.2rem;
+    }
+    
+    .tabela-historico thead th {
+        position: sticky;
+        top: 0;
+        background-color: var(--primary-color);
+        color: white;
+        padding: 10px 10px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.50rem;
+    }
+    
+    .tabela-historico tbody td {
+        padding: 4px 4px;
+        border-bottom: 1px solid var(--gray-light);
+    }
+    
+    .tabela-historico tbody tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .tabela-historico tbody tr:hover {
+        background-color: rgba(52, 152, 219, 0.05);
+    }
+    
+    .valor-cell {
+        text-align: right;
+        font-weight: 500;
+    }
+    
+    .status-cell {
+        text-align: center;
+    }
+    
+    /* Nota: 'badge-status' já foi definida acima, mantendo a que tem mais propriedades específicas para este contexto. */
+    .badge-status {
+        display: inline-block;
+        padding: 4px 4px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        text-transform: uppercase; /* Adicionado para consistência */
+    }
+    
+    .badge-pago {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .badge-agendado {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .badge-outro {
+        background-color: #e2e3e5;
+        color: #383d41;
+    }
+    
+    .sem-registros {
+        padding: 20px;
+        text-align: center;
+        color: #6c757d;
+        font-style: italic;
+    }
+    
+    /* Spinner de carregamento */
+    .loading-spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        vertical-align: middle;
+        border: 0.15em solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-border 0.75s linear infinite;
+        margin-right: 5px;
+    }
+    
+    @keyframes spinner-border {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Responsividade */
+    @media (max-width: 768px) {
+        .filtros-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-filtrar {
+            width: 100%;
+        }
+
+        .resumo-profissional {
+            grid-template-columns: 1fr;
+        }
+
+        .resumo-total {
+            grid-column: span 1;
+        }
+    }
+
+    /* Estilos específicos para o resumo de status */
+    .resumo-status {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .status-card {
+        flex: 1;
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        background: white;
+        box-shadow: var(--box-shadow);
+        text-align: center;
+    }
+    
+    .status-card .title {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 0.25rem;
+    }
+    
+    .status-card .value {
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+    
+    .status-card.pago {
+        border-top: 4px solid var(--success-color);
+    }
+    
+    .status-card.aguardando {
+        border-top: 4px solid var(--secondary-color);
+    }
+    
+    .status-card.agendado {
+        border-top: 4px solid var(--warning-color);
+    }
+
+    .table-sm td {
+        padding: 0.5rem;
+        vertical-align: middle;
+    }
+
+    .text-end {
+        text-align: right;
+    }
+    
+    .flex-grow-1 {
+        flex-grow: 1;
+    }
+    
+    .overflow-auto {
+        overflow: auto;
+    }
+    
+    .h-100 {
+        height: 100%;
+    }
+    
+    .mb-auto {
+        margin-bottom: auto;
+    }
+    
+    .mt-auto {
+        margin-top: auto;
+    }
+    
+    .d-grid {
+        display: grid;
+    }
+    
+    .gap-3 {
+        gap: 1rem;
+    }
+
+</style>
+</head>
+<body>
+
+{% block content %}
+    <div class="container py-4" style="width: 100%;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-0">Sistema de Pagamentos</h1>
+                <p class="text-muted mb-0">Gerenciamento de royalties e SPs</p>
+            </div>
+            <div class="d-flex gap-2">
+                <div class="alert alert-info mb-0 py-1 px-2 small">
+                    <i class="bi bi-info-circle me-1"></i> Fase de testes
+                </div>
+            </div>
+        </div>
+        
+        <div class="row g-3">
+            <!-- Main Content Area -->
+            <div class="col-lg-6">
+                <!-- Seção de Importação de SP -->
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Importar Solicitação de Pagamento</span>
+                        <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#formImportarSP">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="collapse show" id="formImportarSP">
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('importar_sp') }}" enctype="multipart/form-data">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Artista</label>
+                                        <select name="artista_id" class="form-select" required>
+                                            <option value="">Selecione</option>
+                                            {% for artista in artistas %}
+                                                <option value="{{ artista.id }}">{{ artista.nome }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label">Arquivo (.xlsx)</label>
+                                        <input type="file" name="arquivo" accept=".xlsx" class="form-control" required>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label">Identificação (opcional)</label>
+                                        <input type="text" name="identificacao" class="form-control" placeholder="Ex: SP Herdeiros, SP Principal">
+                                    </div>
+
+                                    <div class="col-md-1">
+                                        <button type="submit" class="btn btn-success w-100">
+                                            <i class="bi bi-upload"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lista de SPs Importadas -->
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>SPs Importadas</span>
+                        <span class="badge bg-primary">{{ sps|length }} arquivos</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive scrollable-table" style="max-height: 150px; overflow-y: auto;">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Artista</th>
+                                        <th>Arquivo</th>
+                                        <th>Identificação</th>
+                                        <th class="text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for sp in sps[:2] %}
+                                        <tr>
+                                            <td>{{ sp['nome_artista'] }}</td>
+                                            <td>{{ sp['nome_arquivo'] }}</td>
+                                            <td>{{ sp['identificacao'] or '-' }}</td>
+                                            <td class="text-center">
+                                                <form method="POST" action="{{ url_for('excluir_sp', sp_id=sp['id']) }}" class="d-inline">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                    <button type="submit" class="btn btn-sm btn-danger">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                    {% if sps|length > 2 %}
+                                        {% for sp in sps[2:] %}
+                                            <tr>
+                                                <td>{{ sp['nome_artista'] }}</td>
+                                                <td>{{ sp['nome_arquivo'] }}</td>
+                                                <td>{{ sp['identificacao'] or '-' }}</td>
+                                                <td class="text-center">
+                                                    <form method="POST" action="{{ url_for('excluir_sp', sp_id=sp['id']) }}" class="d-inline">
+                                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                        <button type="submit" class="btn btn-sm btn-danger">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Editor de SP -->
+                <div class="card editor-sp-container">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Editor de SP Profissional</span>
+                        <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#editorSPContainer">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="collapse show editor-sp-row" id="editorSPContainer">
+                        <div class="card-body">
+                            <div class="row g-4">
+                                <div class="col-md-5">
+                                    <div class="card calculation-card h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-muted mb-3">
+                                                <i class="bi bi-gear me-2"></i> Configurações
+                                            </h6>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Artista</label>
+                                                <select id="artistaSelect" class="form-select">
+                                                    <option value="">Selecione</option>
+                                                    {% for artista in artistas %}
+                                                        <option value="{{ artista.id }}">{{ artista.nome }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">Modelo de SP</label>
+                                                <div class="input-group">
+                                                    <select id="spSelect" class="form-select">
+                                                        <option value="">Selecione</option>
+                                                        {% for sp in sps %}
+                                                            <option value="{{ sp.id }}">{{ sp.nome_arquivo }}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mb-3">
+                                                <label class="form-label">Cotação</label>
+                                                <select id="cotacaoSelect" class="form-select" required>
+                                                    <option value="">Selecione uma cotação</option>
+                                                    {% for cot in cotacoes %}
+                                                        <option value="{{ cot.valor }}">
+                                                            {{ cot.mes }}/{{ cot.ano }} - R$ {{ "%.4f"|format(cot.valor) }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-7">
+                                    <div class="card calculation-card h-100">
+                                        <div class="card-body">
+                                            <h6 class="card-title text-muted mb-3">
+                                                <i class="bi bi-calculator me-2"></i> Parâmetros Financeiros
+                                            </h6>
+                                            
+                                            <div class="mb-3">
+                                                <button class="btn btn-outline-secondary w-100 d-flex justify-content-between align-items-center"
+                                                   type="button" data-bs-toggle="collapse" data-bs-target="#listaCalculosCollapse" aria-expanded="false">
+                                                       <span><i class="bi bi-list-check me-2"></i> Cálculos Disponíveis</span>
+                                                            <i class="bi bi-chevron-down"></i>
+                                                </button>
+
+                                                <!-- ÁREA ATUALIZADA - SERVER-SIDE RENDERING -->
+                                                <div class="collapse show mt-2" id="listaCalculosCollapse"> 
+                                                   <div class="border rounded p-2 calculos-container" style="max-height: 200px; overflow-y: auto;">
+                                                       {% set meses = ['', 'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'] %}
+                                                       {% for calc in calculos_disponiveis %}
+                                                           <div class="form-check mb-1">
+                                                               <input class="form-check-input calculo-checkbox"
+                                                                      type="checkbox"
+                                                                      id="calc{{ calc.origem }}_{{ calc.id }}"
+                                                                      value="{{ calc.origem }}_{{ calc.id }}"
+                                                                      data-artista="{{ calc.artista }}"
+                                                                      data-valor-eur="{{ "%.4f"|format(calc.valor_eur|round(4)) }}"
+                                                                      data-mes="{{ calc.mes }}"
+                                                                      data-ano="{{ calc.ano }}"> 
+                                                                   <strong>{{ "Artista não identificado" if "desconhecido" in (calc.artista|lower) else calc.artista }}</strong>
+                                                                   {{ calc.mes_nome or meses[calc.mes] }}/{{ calc.ano }} –
+                                                                   €{{ "%.4f"|format(calc.valor_eur|round(4)) }}
+                                                               </label>
+                                                           </div>
+                                                       {% endfor %}
+                                                   </div>           
+                                                </div>
+                                            </div> 
+
+                                            <div class="row g-2 mb-3">
+                                                <div class="col-md-6">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="checkboxRetencao">
+                                                        <label class="form-check-label small" for="checkboxRetencao">Aplicar Retenção ISS</label>
+                                                    </div>
+                                                    <input type="number" class="form-control form-control-sm mt-1" 
+                                                           id="inputPercentualRetencao" placeholder="% Retenção" min="0" max="100" step="0.01">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="checkboxHerdeiro">
+                                                        <label class="form-check-label small" for="checkboxHerdeiro">Tem Herdeiro</label>
+                                                    </div>
+                                                    <input type="number" class="form-control form-control-sm mt-1" 
+                                                           id="inputPercentualHerdeiro" placeholder="% Herdeiro" min="0" max="100" step="0.01">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Resumo do Documento - Layout Profissional -->
+                            <div class="card mt-4 calculation-card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="card-title text-muted mb-0">
+                                            <i class="bi bi-file-text me-2"></i> Resumo do Documento
+                                        </h6>
+                                        <button class="btn btn-sm btn-primary" id="btnCalcularResumo">
+                                            <i class="bi bi-calculator me-1"></i> Calcular
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Resumo de cálculo profissional -->
+                                    <div class="resumo-profissional" id="resumoSP">
+                                        <div class="text-center text-muted py-4 grid-col-span-2">
+                                            <i class="bi bi-info-circle"></i> Selecione os cálculos e clique em "Calcular"
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Anexos e Vencimento -->
+                                    <div class="mt-4">
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle me-2"></i> 
+                                            <strong>Fase de testes:</strong> O agendamento é opcional. Você pode gerar documentos sem agendar pagamentos.
+                                        </div>
+                                        
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label small">Data de Vencimento</label>
+                                                <div class="vencimento-container">
+                                                    <input type="date" class="form-control" id="vencimentoInput" name="vencimento">
+                                                    <button id="btnAgendarPagamento" class="btn btn-primary btn-agendar" data-status="aguardando">
+                                                        <i class="bi bi-calendar-check me-1"></i> Agendar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <label class="form-label small">Anexar PDF(s)</label>
+                                                <div class="input-group">
+                                                    <input type="file" class="form-control" id="inputAnexosPDF" accept="application/pdf" multiple>
+                                                    <button class="btn btn-outline-primary" type="button" id="btnAnexarPDF">
+                                                        <i class="bi bi-upload me-1"></i> Enviar
+                                                    </button>
+                                                </div>
+                                                
+                                                <!-- Preview de arquivos anexados -->
+                                                <div class="file-preview" id="filePreviewContainer">
+                                                    <!-- Files will be shown here -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer bg-transparent border-top-0 d-flex justify-content-end gap-2">
+                            <!-- Formulário para Gerar Excel -->
+                            <form id="formGerarExcel" method="POST" action="{{ url_for('gerar_sp_pagamento') }}" target="_blank">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" id="spIdHidden" name="sp_id">
+                                <input type="hidden" id="calculosIdsHiddenForm" name="calculos_ids">
+                                <input type="hidden" id="valorEurHiddenForm" name="valor_eur">
+                                <input type="hidden" id="cotacaoHiddenForm" name="cotacao">
+                                <input type="hidden" id="vencimentoInputHidden" name="vencimento">
+                                <input type="hidden" name="status_pagamento" id="statusPagamentoHidden">
+                                <input type="hidden" id="retencaoHiddenForm" name="retencao">
+                                <button type="submit" class="btn btn-primary">Gerar Excel</button>
+                            </form>
+
+                            <button type="button" class="btn btn-success" id="btnGerarSP">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> Gerar PDF
+                            </button>
+
+                            <form id="formGerarPDF" method="POST" action="/gerar_sp_pagamento_pdf" enctype="multipart/form-data" target="_blank" style="display: none;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">               
+                                <input type="hidden" name="sp_id" id="spIdPDF">
+                                <input type="hidden" name="calculos_ids" id="calculosPDF">
+                                <input type="hidden" name="valor_eur" id="valorEurPDF">
+                                <input type="hidden" name="cotacao" id="cotacaoPDF">
+                                <input type="hidden" name="vencimento" id="vencimentoPDF">
+                                <input type="hidden" name="retencao" id="retencaoPDF">
+                                <input type="hidden" name="status_pagamento" id="statusPagamentoPDFHidden">
+                                <input type="hidden" name="mes" id="mesPDF">
+                                <input type="hidden" name="ano" id="anoPDF">
+                                <input type="hidden" name="artista" id="artistaNomePDF">
+                                <input type="file" name="anexos[]" id="inputAnexosForm" multiple hidden>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+    
+<!-- Histórico de Pagamentos (direita) -->
+<div class="col-lg-6 h-100 d-flex flex-column ps-2" style="max-height: 100vh;">
+    <div class="card flex-grow-1 d-flex flex-column" style="min-height: 0;">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Histórico de Pagamentos</span>
+            <span class="badge bg-success" id="totalPagoHistorico">
+                R$ {{ "%.2f"|format(total_pago)|replace(".", ",") }}
+            </span>
+        </div>
+
+        <div class="card-body d-flex flex-column h-100" style="overflow: hidden;">
+            <!-- Filtros -->
+            <div class="filtros-container mb-3">
+                <div class="row g-2">
+                    <div class="col-5">
+                        <label class="form-label small mb-1" for="filtroHistoricoArtista">Artista</label>
+                        <select class="form-select form-select-sm" id="filtroHistoricoArtista">
+                            <option value="">Todos</option>
+                            {% for artista in artistas %}
+                                <option value="{{ artista.nome }}">{{ artista.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-3">
+                        <label class="form-label small mb-1" for="filtroHistoricoMes">Mês</label>
+                        <select class="form-select form-select-sm" id="filtroHistoricoMes">
+                            <option value="">Todos</option>
+                            {% for i in range(1, 13) %}
+                                <option value="{{ meses_abreviado[i] }}">{{ meses_abreviado[i] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-2 d-flex align-items-end">
+                        <button class="btn btn-sm btn-outline-primary w-100" id="btnFiltrarHistorico">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mensagens dinâmicas da API -->
+            <div id="mensagensHistorico"></div>
+
+<!-- Lista de pagamentos com rolagem controlada -->
+<div class="table-responsive flex-grow-1" style="overflow-y: auto; max-height: 1000px;">
+    <table class="table table-sm table-hover">
+        <thead style="position: sticky; top: 0; background: white; z-index: 8;">
+            <tr>
+                <th>Data</th>
+                <th>Artista</th>
+                <th>Descrição</th>
+                <th class="text-end">Valor (BRL)</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="listaHistoricoPagamentos">
+                 <button id="btnAtualizarStatus">Atualizar Status Agendados</button>
+            {% for pagamento in pagamentos %}
+            <tr>
+                <td>{{ pagamento.vencimento.strftime('%d/%m/%Y') if pagamento.vencimento else '-' }}</td>
+                <td>{{ pagamento.artista_nome or 'Artista não identificado' }}</td>
+                <td>{{ pagamento.mes }}/{{ pagamento.ano }}</td>
+                <td class="text-end">R$ {{ "%.2f"|format(pagamento.valor_brl)|replace('.', ',') }}</td>
+                <td>
+                    {% set status_lower = pagamento.status.lower() %}
+                    {% if status_lower == 'pago' %}
+                        <span class="badge bg-success badge-status">Pago</span>
+                    {% elif status_lower == 'agendado' %}
+                        <span class="badge bg-warning badge-status text-dark">Agendado</span>
+                    {% else %}
+                        <span class="badge bg-secondary badge-status">{{ pagamento.status }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="text-center text-muted py-3">
+                    Nenhum pagamento registrado
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+
+{% endblock %}
+
+<!-- Rodapé -->
+<div class="mt-3 d-flex justify-content-between align-items-center">
+    <div class="small text-muted">
+        <span class="badge bg-success me-1"></span> Pago
+        <span class="badge bg-warning text-dark mx-2"></span> Agendado
+    </div>
+    <button class="btn btn-sm btn-outline-primary" id="btnAtualizarHistorico">
+        <i class="bi bi-arrow-clockwise me-1"></i> Atualizar
+    </button>
+</div>
+
+<!-- Botão Flutuante -->
+<a href="#" class="floating-button" data-bs-toggle="collapse" data-bs-target="#editorSPContainer">
+    <i class="bi bi-pencil"></i>
+</a>
+
+<!-- Carrega JS de histórico com fallback de dados embutidos -->
+<script>
+    // Fallback: dados do histórico para JS
+    window.pagamentosInicial = {{ pagamentos | tojson | safe if pagamentos else '[]' }};
+</script>
+<script src="{{ url_for('static', filename='js/historico_pagamentos.js') }}"></script>
+
+<!-- Meta token -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+<!-- Bootstrap Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- JS específico da aba Pagamentos -->
+{% block extra_js %}
+<script>
+    const todosCalculos = {{ calculos_disponiveis | tojson }};
+</script>
+<script src="{{ url_for('static', filename='js/pagamentos.js') }}"></script>
+{% endblock %}
+
+

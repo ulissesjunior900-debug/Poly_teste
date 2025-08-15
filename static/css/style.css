@@ -1,0 +1,143 @@
+/* ===== Estilo global ===== */
+body {
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', sans-serif;
+  position: relative; /* Adicionado */
+}
+
+/* ===== Correção para o botão do editor ===== */
+#btnAbrirEditor {
+  position: relative;
+  z-index: 100;
+  margin: 0.5rem 0;
+  padding: 0.5rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: 2px solid #0d6efd !important; /* Força a borda */
+}
+
+#btnAbrirEditor:hover {
+  background-color: #0d6efd !important;
+  color: white !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* ===== Container do editor ===== */
+#editorSPContainer {
+  position: relative;
+  width: 100%;
+  z-index: 10;
+  display: block;
+  margin-top: 1rem;
+}
+
+
+
+/* ===== Correção para collapse ===== */
+.collapse {
+  transition: height 0.35s ease !important;
+  overflow: hidden;
+  display: none;
+}
+.collapse.show {
+  display: block;
+}
+
+/* ===== Botões em geral (ajuste seguro) ===== */
+.btn {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+/* ===== Cards ===== */
+.card {
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden; /* Adicionado */
+}
+
+/* ===== Modal ===== */
+.modal-content {
+  border-radius: 12px;
+  padding: 1rem;
+  border: none;
+}
+
+/* ===== Garante visibilidade dos elementos ===== */
+.sp-viewer-container, 
+.resumo-container {
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== Inputs ===== */
+input[type="text"],
+input[type="number"],
+select,
+textarea {
+  border-radius: 6px;
+  border: 1px solid #ced4da !important;
+}
+
+/* ===== Tabela do histórico ===== */
+.table th,
+.table td {
+  vertical-align: middle;
+  position: relative;
+}
+
+/* ===== Responsividade ===== */
+@media (max-width: 768px) {
+  #editorSPContainer {
+    position: relative;
+    width: calc(100% - 30px);
+    margin: 0 auto;
+  }
+  
+  .editor-container {
+    flex-direction: column;
+  }
+  
+  .resumo-container {
+    min-width: 100% !important;
+    margin-top: 1rem;
+  }
+}
+
+/* ===== Status de Pagamento ===== */
+
+.badge-status {
+    display: inline-block;
+    padding: 0.4em 0.8em;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.75em;
+    text-align: center;
+    min-width: 90px;
+    transition: all 0.3s ease;
+}
+
+/* Quando o status for Pago */
+.badge-paid {
+    background-color: #d4edda !important;  /* verde claro */
+    color: #155724 !important;              /* verde escuro */
+}
+
+/* Quando o status for Aguardando */
+.badge-awaiting {
+    background-color: #fff3cd !important;  /* amarelo claro */
+    color: #856404 !important;             /* amarelo escuro */
+}
+
+/* Opcional: caso você queira um estado de Erro ou Outro */
+.badge-error {
+    background-color: #f8d7da !important;  /* vermelho claro */
+    color: #721c24 !important;             /* vermelho escuro */
+}
+
+/* Opcional: se você tiver status "Parcial" ou "Em processamento" */
+.badge-processing {
+    background-color: #d1ecf1 !important;  /* azul claro */
+    color: #0c5460 !important;             /* azul escuro */
+}

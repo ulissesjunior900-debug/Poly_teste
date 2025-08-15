@@ -1,0 +1,54 @@
+<div class="modal fade" id="modalDetalhesArtistaAssisao" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title">Detalhes do Artista: {{ artista.nome }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      
+      <div class="modal-body">
+<!-- Variações -->
+<h6>Variações</h6>
+{% if artista.variacoes %}
+  <div class="mb-4">
+    {% for variacao in artista.variacoes.replace(',', '||').replace('\n', '||').split('||') %}
+      {% if variacao.strip() %}
+        <div>• {{ variacao.strip() }}</div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="text-muted">Nenhuma variação cadastrada.</p>
+{% endif %}
+
+        <!-- Títulos e Percentuais -->
+        <h6 class="mt-4">Títulos e Percentuais</h6>
+        {% if artista.titulos %}
+          <table class="table table-bordered table-striped">
+            <thead class="table-light">
+              <tr>
+                <th>Título</th>
+                <th>Percentual (%)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for titulo in artista.titulos %}
+                <tr>
+                  <td>{{ titulo.titulo }}</td>
+                  <td>{{ titulo.percentual }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="text-muted">Nenhum título cadastrado.</p>
+        {% endif %}
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>

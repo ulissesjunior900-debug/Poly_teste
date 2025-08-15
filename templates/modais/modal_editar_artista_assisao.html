@@ -1,0 +1,135 @@
+<div class="modal fade" id="modalEditarArtistaAssisao" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('atualizar_artista_assisao') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="id" value="{{ artista.id }}">
+
+        <div class="modal-header bg-warning">
+          <h5 class="modal-title">Editar Artista: {{ artista.nome }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Nome -->
+          <div class="mb-3">
+            <label class="form-label">Nome do Artista</label>
+            <input type="text" name="nome" class="form-control" value="{{ artista.nome }}" required>
+          </div>
+
+          <!-- Variações -->
+          <div class="mb-3">
+            <label class="form-label">Variações (separadas por ||)</label>
+            <textarea name="variacoes" class="form-control" rows="3" placeholder="Ex: Assis||A. Cavalcanti">{{ artista.variacoes }}</textarea>
+          </div>
+
+          <!-- Títulos Avulsos com Percentual Único -->
+          <hr>
+          <label class="form-label">Títulos e Percentuais</label>
+          <div class="card mb-3">
+            <div class="card-header bg-light">
+              <h6 class="mb-0">Títulos Avulsos com Percentual Único</h6>
+            </div>
+            <div class="card-body">
+              <div class="mb-2">
+                <label class="form-label">Cole os títulos (um por linha)</label>
+                <textarea class="form-control" id="titulosAvulsosEdicao" rows="4"></textarea>
+              </div>
+              <div class="row">
+                <div class="col-md-4">
+                  <label class="form-label">Percentual para todos</label>
+                  <input type="number" class="form-control" step="0.01" id="percentualAvulsosEdicao" placeholder="%">
+                </div>
+                <div class="col-md-8 d-flex align-items-end">
+                  <button type="button" class="btn btn-primary" onclick="adicionarTitulosEdicaoEmMassa()">Adicionar Todos</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cadastro Individual -->
+          <div class="card">
+            <div class="card-header bg-light">
+              <h6 class="mb-0">Cadastro Individual</h6>
+            </div>
+            <div class="card-body">
+              <div id="titulosEdicaoContainer">
+                {% for titulo in artista.titulos %}
+                  <div class="row mb-2">
+                    <div class="col-7">
+                      <input type="text" name="titulos[]" class="form-control" value="{{ titulo.titulo }}" required>
+                    </div>
+                    <div class="col-3">
+                      <input type="number" name="percentuais[]" step="0.01" class="form-control" value="{{ titulo.percentual }}" required>
+                    </div>
+                    <div class="col-2 text-end">
+                      <button type="button" class="btn btn-outline-danger" onclick="this.closest('.row').remove()">Excluir</button>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+              <button type="button" class="btn btn-outline-primary btn-sm mt-2" onclick="adicionarTituloEdicaoIndividual()">Adicionar Título Individual</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Salvar Alterações</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function adicionarTitulosEdicaoEmMassa() {
+  const titulosText = document.getElementById('titulosAvulsosEdicao').value.trim();
+  const percentual = document.getElementById('percentualAvulsosEdicao').value.trim();
+  const container = document.getElementById('titulosEdicaoContainer');
+
+  if (!titulosText || !percentual || isNaN(percentual) || percentual < 0 || percentual > 100) {
+    alert('Preencha os títulos e um percentual válido entre 0 e 100.');
+    return;
+  }
+
+  const titulos = titulosText.split('\n').filter(t => t.trim() !== '');
+  titulos.forEach(titulo => {
+    const div = document.createElement('div');
+    div.className = 'row mb-2';
+    div.innerHTML = `
+      <div class="col-7">
+        <input type="text" name="titulos[]" class="form-control" value="${titulo.trim()}" required>
+      </div>
+      <div class="col-3">
+        <input type="number" name="percentuais[]" step="0.01" class="form-control" value="${percentual}" required>
+      </div>
+      <div class="col-2 text-end">
+        <button type="button" class="btn btn-outline-danger" onclick="this.closest('.row').remove()">Excluir</button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+
+  document.getElementById('titulosAvulsosEdicao').value = '';
+  document.getElementById('percentualAvulsosEdicao').value = '';
+}
+
+function adicionarTituloEdicaoIndividual() {
+  const container = document.getElementById('titulosEdicaoContainer');
+  const div = document.createElement('div');
+  div.className = 'row mb-2';
+  div.innerHTML = `
+    <div class="col-7">
+      <input type="text" name="titulos[]" class="form-control" placeholder="Título" required>
+    </div>
+    <div class="col-3">
+      <input type="number" name="percentuais[]" step="0.01" class="form-control" placeholder="%" required>
+    </div>
+    <div class="col-2 text-end">
+      <button type="button" class="btn btn-outline-danger" onclick="this.closest('.row').remove()">Excluir</button>
+    </div>
+  `;
+  container.appendChild(div);
+}
+</script>

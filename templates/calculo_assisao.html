@@ -1,0 +1,346 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Cálculo Assisão</h2>
+
+  <!-- Artistas Cadastrados -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Artistas Cadastrados</h4>
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalNovoArtistaAssisao">Novo Artista</button>
+  </div>
+
+  {% for artista in artistas if artista.tipo == 'assisao' %}
+    <div class="card mb-2">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <strong>{{ artista.nome }}</strong>
+        <div>
+          <button class="btn btn-sm btn-info" onclick="carregarDetalhesArtistaAssisao({{ artista.id }})">Detalhes</button>
+          <button class="btn btn-sm btn-warning" onclick="carregarEdicaoArtistaAssisao({{ artista.id }})">Editar</button>
+          <form method="POST" action="{{ url_for('excluir_artista_assisao', artista_id=artista.id) }}" class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+
+  <!-- Formulário de Cálculo -->
+  <hr>
+  <h4 class="mt-4">Novo Cálculo</h4>
+<form method="POST" action="{{ url_for('calculo_assisao') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="row g-3 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label">Artista</label>
+      <select name="artista_id" class="form-select" required>
+        <option value="">Selecione</option>
+        {% for artista in artistas if artista.tipo == 'assisao' %}
+          <option value="{{ artista.id }}">{{ artista.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Planilha</label>
+      <select name="planilha_id" class="form-select" required>
+        <option value="">Selecione</option>
+        {% for arquivo in planilhas %}
+          <option value="{{ arquivo.id }}">{{ arquivo.nome_arquivo }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Cotação</label>
+      <select name="cotacao" class="form-select" required>
+        <option value="">Selecione</option>
+        {% set meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'] %}
+        {% for cotacao in cotacoes %}
+          <option value="{{ "%.4f"|format(cotacao.valor|float) }}">
+            {{ meses[cotacao.mes|int - 1] }}/{{ cotacao.ano }} - R$ {{ "%.4f"|format(cotacao.valor|float) }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Mês</label>
+      <select name="mes" class="form-select" required>
+        {% for num, nome_mes in [(1,'Janeiro'),(2,'Fevereiro'),(3,'Março'),(4,'Abril'),(5,'Maio'),(6,'Junho'),(7,'Julho'),(8,'Agosto'),(9,'Setembro'),(10,'Outubro'),(11,'Novembro'),(12,'Dezembro')] %}
+          <option value="{{ num }}" {% if num == current_month %}selected{% endif %}>{{ nome_mes }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-2">
+      <label class="form-label">Ano</label>
+      <select name="ano" class="form-select" required>
+        {% set current_year_num = current_year|int %}
+        {% for a in range(current_year_num -1, current_year_num +2) %}
+          <option value="{{ a }}" {% if a == current_year_num %}selected{% endif %}>{{ a }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-12">
+      <button type="submit" class="btn btn-primary w-100 mt-2">
+        <i class="bi bi-calculator"></i> Calcular
+      </button>
+    </div>
+  </div>
+</form>
+
+
+  {% if resultados_detalhados %}
+    <hr>
+    <h4 class="mt-4">Resultado do Cálculo</h4>
+    <div class="alert alert-success">
+      <strong>{{ dados_salvar.artista }}</strong><br>
+      Valor em EUR: € {{ "%.4f"|format(total_eur) }}<br>
+      Valor em BRL: R$ {{ "%.2f"|format(total_brl) }}
+    </div>
+
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Percentual</th>
+          <th>Valor EUR</th>
+          <th>Valor BRL</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in resultados_detalhados %}
+          <tr>
+            <td>{{ item.titulo }}</td>
+            <td>{{ item.percentual }}%</td>
+            <td>€ {{ "%.4f"|format(item.valor_eur) }}</td>
+            <td>R$ {{ "%.2f"|format(item.valor_brl) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+<form method="POST" action="{{ url_for('salvar_calculo_assisao') }}" id="formResultadoAssisao">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="dados_json" value='{{ dados_salvar | tojson }}'>
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-success">
+      <i class="bi bi-save"></i> Salvar Cálculo Assisão
+    </button>
+    <button type="button" class="btn btn-secondary" onclick="descartarCalculoAssisao()">
+      <i class="bi bi-x-circle"></i> Descartar Cálculo
+    </button>
+  </div>
+</form>
+
+  {% endif %}
+
+  <!-- Histórico de Cálculos -->
+  <hr>
+  <h4 class="mt-4">Histórico de Cálculos</h4>
+  {% if historico %}
+    <table class="table table-sm table-striped">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Artista</th>
+          <th>EUR</th>
+          <th>BRL</th>
+          <th>Mês</th>
+          <th>Ano</th>
+          <th>Cotação</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in historico %}
+          <tr>
+            <td>{{ item.data_calculo.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td>{{ item.artista }}</td>
+            <td>€ {{ "%.4f"|format(item.valor_eur) }}</td>
+            <td>R$ {{ "%.2f"|format(item.valor_brl) }}</td>
+            {% set nomes_meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'] %}
+<td>{{ nomes_meses[item.mes - 1] }}</td>
+            <td>{{ item.ano }}</td>
+            <td>R$ {{ "%.4f"|format(item.cotacao) }}</td>
+            <td>
+               <form method="POST" action="{{ url_for('excluir_calculo_assisao', id=item.id) }}" onsubmit="return confirm('Deseja excluir este cálculo?')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+  </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-muted">Nenhum cálculo salvo até o momento.</p>
+  {% endif %}
+</div>
+
+<!-- Modal Novo Artista -->
+<div class="modal fade" id="modalNovoArtistaAssisao" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('cadastrar_artista_assisao') }}">
+        <div class="modal-header">
+          <h5 class="modal-title">Cadastrar Novo Artista</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label for="nome" class="form-label">Nome do Artista</label>
+            <input type="text" class="form-control" id="nome" name="nome" required>
+          </div>
+          <div class="mb-3">
+            <label for="variacoes" class="form-label">Variações (uma por linha)</label>
+            <textarea class="form-control" id="variacoes" name="variacoes" rows="3"></textarea>
+          </div>
+          <h5 class="mt-4">Títulos e Percentuais</h5>
+          <div id="titulosContainerAssisao"></div>
+          <button type="button" id="btnAdicionarTituloAssisao" class="btn btn-outline-primary mt-2">Adicionar Título</button>
+          <div class="row mt-3">
+            <div class="col-md-8">
+              <label for="titulosAvulsosAssisao" class="form-label">Títulos Avulsos (um por linha)</label>
+              <textarea class="form-control" id="titulosAvulsosAssisao" rows="3"></textarea>
+            </div>
+            <div class="col-md-4">
+              <label for="percentualAvulsosAssisao" class="form-label">Percentual (%)</label>
+              <input type="number" class="form-control" id="percentualAvulsosAssisao" step="0.01">
+              <button type="button" id="btnAdicionarAvulsosAssisao" class="btn btn-outline-secondary mt-2">Aplicar</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Salvar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% set carregar_script_base = true %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const btnAdicionarTitulo = document.getElementById("btnAdicionarTituloAssisao");
+  const btnAdicionarAvulsos = document.getElementById("btnAdicionarAvulsosAssisao");
+
+  if (btnAdicionarTitulo && !btnAdicionarTitulo._listenerAdded) {
+    btnAdicionarTitulo.addEventListener("click", function () {
+      const container = document.getElementById("titulosContainerAssisao");
+      const div = document.createElement("div");
+      div.className = "row align-items-center mb-2";
+      div.innerHTML = `
+        <div class="col-7">
+          <input type="text" class="form-control" name="titulos[]" placeholder="Título" required>
+        </div>
+        <div class="col-3">
+          <input type="number" step="0.01" min="0" max="100" class="form-control" name="percentuais[]" placeholder="%" required>
+        </div>
+        <div class="col-2 text-end">
+          <button type="button" class="btn btn-outline-danger" onclick="this.closest('.row').remove()">Excluir</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+    btnAdicionarTitulo._listenerAdded = true;
+  }
+
+if (btnAdicionarAvulsos && !btnAdicionarAvulsos._listenerAdded) {
+  btnAdicionarAvulsos.addEventListener("click", function () {
+    const titulosText = document.getElementById("titulosAvulsosAssisao").value.trim();
+    const percentualInput = document.getElementById("percentualAvulsosAssisao");
+
+    if (!percentualInput) {
+      alert("Campo de percentual não encontrado no HTML.");
+      return;
+    }
+
+    let percentual = percentualInput.value.trim().replace(",", ".");
+    console.log("Títulos:", titulosText);
+    console.log("Percentual bruto:", percentual);
+
+    if (!titulosText) {
+      alert("Preencha os títulos.");
+      return;
+    }
+
+    if (percentual === "") {
+      alert("Percentual está vazio.");
+      return;
+    }
+
+    if (isNaN(percentual)) {
+      alert("Percentual não é um número válido.");
+      return;
+    }
+
+    percentual = parseFloat(percentual);
+    if (percentual < 0 || percentual > 100) {
+      alert("Percentual fora do intervalo permitido (0 a 100).");
+      return;
+    }
+
+    const titulos = titulosText.split('\n').filter(t => t.trim() !== "");
+    const container = document.getElementById("titulosContainerAssisao");
+
+    titulos.forEach(titulo => {
+      const div = document.createElement("div");
+      div.className = "row align-items-center mb-2";
+      div.innerHTML = `
+        <div class="col-7">
+          <input type="text" class="form-control" name="titulos[]" value="${titulo.trim()}" required>
+        </div>
+        <div class="col-3">
+          <input type="number" step="0.01" min="0" max="100" class="form-control" name="percentuais[]" value="${percentual}" required>
+        </div>
+        <div class="col-2 text-end">
+          <button type="button" class="btn btn-outline-danger" onclick="this.closest('.row').remove()">Excluir</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+
+    document.getElementById("titulosAvulsosAssisao").value = "";
+    percentualInput.value = "";
+  });
+
+  btnAdicionarAvulsos._listenerAdded = true;
+}
+});
+
+function carregarDetalhesArtistaAssisao(id) {
+  fetch(`/detalhes_artista_assisao/${id}`)
+    .then(res => res.text())
+    .then(html => {
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = html;
+      document.body.appendChild(wrapper);
+      const modal = new bootstrap.Modal(wrapper.querySelector('.modal'));
+      modal.show();
+    });
+}
+
+function carregarEdicaoArtistaAssisao(id) {
+  fetch(`/editar_artista_assisao/${id}`)
+    .then(res => res.text())
+    .then(html => {
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = html;
+      document.body.appendChild(wrapper);
+      const modal = new bootstrap.Modal(wrapper.querySelector('.modal'));
+      modal.show();
+    });
+}
+</script>
+{% endblock %}

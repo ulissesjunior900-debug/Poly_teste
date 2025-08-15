@@ -1,0 +1,174 @@
+<form method="POST" action="{{ url_for('atualizar_artista_especial') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="id" value="{{ artista.id }}">
+
+  <div class="modal-header">
+    <h5 class="modal-title">Editar Artista</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+  </div>
+
+  <div class="modal-body">
+    <!-- Nome -->
+    <div class="mb-3">
+      <label class="form-label">Nome do Artista</label>
+      <input type="text" name="nome" class="form-control rounded-pill" value="{{ artista.nome }}" required>
+    </div>
+
+    <!-- Variações -->
+    <div class="mb-3">
+      <label class="form-label">Variações (uma por linha)</label>
+      <div id="variacoesContainer">
+        {% for variacao in (artista.variacoes or '').split('||') %}
+          {% if variacao.strip() %}
+          <div class="input-group mb-2">
+            <input type="text" name="variacoes[]" class="form-control" value="{{ variacao.strip() }}">
+            <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">Excluir</button>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <button type="button" class="btn btn-outline-primary btn-sm mt-1" id="btnAdicionarVariacao">Adicionar Variação</button>
+    </div>
+
+    <hr>
+
+    <!-- Títulos e Percentuais -->
+    <h6 class="mb-2">Títulos e Percentuais</h6>
+
+    <!-- Cadastro em massa -->
+    <div class="card mb-3">
+      <div class="card-header bg-light">
+        <h6 class="mb-0">Cadastro Rápido (vários títulos com mesmo percentual)</h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-2">
+          <label class="form-label">Cole os títulos (um por linha)</label>
+          <textarea class="form-control" id="titulosEmMassa" rows="4" placeholder="Ex: Título 1&#10;Título 2&#10;Título 3"></textarea>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <label class="form-label">Percentual único</label>
+            <input type="number" id="percentualEmMassa" step="0.01" class="form-control" placeholder="%">
+          </div>
+          <div class="col-md-8 d-flex align-items-end">
+            <button type="button" class="btn btn-primary" onclick="adicionarTitulosEmMassa()">Adicionar Todos</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cadastro individual -->
+    <div id="titulosContainer">
+      {% for titulo in titulos %}
+      <div class="row align-items-center mb-2">
+        <div class="col-7">
+          <input type="text" class="form-control" name="titulos[]" value="{{ titulo.titulo }}">
+        </div>
+        <div class="col-3">
+          <input type="number" step="0.01" class="form-control" name="percentuais[]" value="{{ titulo.percentual }}">
+        </div>
+        <div class="col-2 text-end">
+          <button type="button" class="btn btn-outline-danger" onclick="this.closest('.row').remove()">Excluir</button>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="btnAdicionarTitulo">Adicionar Título Individual</button>
+  </div>
+
+  <div class="modal-footer">
+    <button type="submit" class="btn btn-success rounded-pill">Salvar</button>
+    <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+  </div>
+</form>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const variacoesBtn = document.getElementById("btnAdicionarVariacao");
+  if (variacoesBtn) {
+    variacoesBtn.addEventListener("click", function () {
+      const container = document.getElementById("variacoesContainer");
+      const div = document.createElement("div");
+      div.className = "input-group mb-2";
+      div.innerHTML = `
+        <input type="text" name="variacoes[]" class="form-control" placeholder="Nova variação">
+        <button type="button" class="btn btn-outline-danger" onclick="this.parentElement.remove()">Excluir</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  const titulosBtn = document.getElementById("btnAdicionarTitulo");
+  if (titulosBtn) {
+    titulosBtn.addEventListener("click", function () {
+      const container = document.getElementById("titulosContainer");
+      const div = document.createElement("div");
+      div.className = "row align-items-center mb-2";
+      div.innerHTML = `
+        <div class="col-7">
+          <input type="text" class="form-control" name="titulos[]" placeholder="Título">
+        </div>
+        <div class="col-3">
+          <input type="number" step="0.01" class="form-control" name="percentuais[]" placeholder="%">
+        </div>
+        <div class="col-2 text-end">
+          <button type="button" class="btn btn-outline-danger" onclick="this.closest('.row').remove()">Excluir</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+});
+
+<script>
+function adicionarTitulosEdicaoEmMassa() {
+  const titulosText = document.getElementById('titulosAvulsosEdicao').value.trim();
+  const percentualInput = document.getElementById('percentualAvulsosEdicao');
+  let percentual = percentualInput.value.trim().replace(',', '.'); // Corrige vírgula
+
+  if (!titulosText) {
+    alert('Preencha os títulos.');
+    return;
+  }
+
+  if (percentual === '') {
+    alert('Preencha o percentual.');
+    return;
+  }
+
+  if (isNaN(percentual)) {
+    alert('O percentual informado não é um número válido.');
+    return;
+  }
+
+  percentual = parseFloat(percentual);
+  if (percentual < 0 || percentual > 100) {
+    alert('O percentual deve estar entre 0 e 100.');
+    return;
+  }
+
+  const titulos = titulosText.split('\n').filter(t => t.trim() !== '');
+  const container = document.getElementById('titulosEdicaoContainer');
+
+  titulos.forEach(titulo => {
+    const div = document.createElement('div');
+    div.className = 'row mb-2';
+    div.innerHTML = `
+      <div class="col-7">
+        <input type="text" name="titulos[]" class="form-control" value="${titulo.trim()}" required>
+      </div>
+      <div class="col-3">
+        <input type="number" name="percentuais[]" step="0.01" class="form-control" value="${percentual}" required>
+      </div>
+      <div class="col-2 text-end">
+        <button type="button" class="btn btn-outline-danger" onclick="this.closest('.row').remove()">Excluir</button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+
+  // Limpa os campos após adicionar
+  document.getElementById('titulosAvulsosEdicao').value = '';
+  percentualInput.value = '';
+}
+</script>

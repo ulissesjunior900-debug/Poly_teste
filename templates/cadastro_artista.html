@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Artistas - PolyMusic{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Artistas</h2>
+        <button id="btnNovoArtista" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Novo Artista
+        </button>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <!-- Modal Novo Artista -->
+    <div class="modal fade" id="novoArtistaModal" tabindex="-1" aria-labelledby="novoArtistaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form method="POST" action="{{ url_for('artistas') }}">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="novoArtistaModalLabel">Cadastrar Novo Artista</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label for="nome" class="form-label">Nome(s) do Artista</label>
+                            <input type="text" class="form-control" id="nome" name="nome" placeholder="Ex: Jorge Silva, Banda Carícias" required>
+                            <small class="form-text text-muted">Separe nomes com vírgula se forem agrupados.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="percentual" class="form-label">Percentual (%)</label>
+                            <input type="number" class="form-control" step="0.01" name="percentual" id="percentual" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Artista -->
+    <div class="modal fade" id="editarArtistaModal" tabindex="-1" aria-labelledby="editarArtistaModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form method="POST" id="formEditarArtista">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title" id="editarArtistaModalLabel">Editar Artista</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label for="editar_nome" class="form-label">Nome(s) do Artista</label>
+                            <input type="text" class="form-control" id="editar_nome" name="nome" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editar_percentual" class="form-label">Percentual (%)</label>
+                            <input type="number" class="form-control" step="0.01" id="editar_percentual" name="percentual" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% if artistas %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="py-3 px-4">Nome</th>
+                            <th class="py-3 px-4">Percentual (%)</th>
+                            <th class="py-3 px-4 text-end">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for artista in artistas %}
+                        <tr>
+                            <td class="py-3 px-4 align-middle">{{ artista.nome }}</td>
+                            <td class="py-3 px-4 align-middle">{{ "%.2f"|format(artista.percentual) }}</td>
+                            <td class="py-3 px-4 align-middle text-end">
+                                <button 
+                                    class="btn btn-sm btn-outline-primary btn-editar"
+                                    data-id="{{ artista.id }}"
+                                    data-nome="{{ artista.nome }}"
+                                    data-percentual="{{ "%.2f"|format(artista.percentual) }}"
+                                >
+                                    <i class="fas fa-edit"></i> Editar
+                                </button>
+
+                                <form method="POST" action="{{ url_for('excluir_artista', id=artista.id) }}" class="d-inline ms-2" onsubmit="return confirm('Tem certeza que deseja excluir este artista?')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash-alt"></i> Excluir
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">Nenhum artista cadastrado</h5>
+            <p class="text-muted mb-0">Clique no botão "Novo Artista" para começar</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Novo Artista
+    const novoBtn = document.getElementById('btnNovoArtista');
+    const novoModal = new bootstrap.Modal(document.getElementById('novoArtistaModal'));
+    if (novoBtn && novoModal) {
+        novoBtn.addEventListener('click', () => novoModal.show());
+    }
+
+    // Editar Artista
+    const editarModal = new bootstrap.Modal(document.getElementById('editarArtistaModal'));
+    const formEditar = document.getElementById('formEditarArtista');
+
+    document.querySelectorAll('.btn-editar').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            const nome = btn.getAttribute('data-nome');
+            const percentual = btn.getAttribute('data-percentual');
+
+            document.getElementById('editar_nome').value = nome;
+            document.getElementById('editar_percentual').value = percentual;
+            formEditar.action = `/artistas/editar/${id}`;
+
+            editarModal.show();
+        });
+    });
+});
+</script>
+{% endblock %}

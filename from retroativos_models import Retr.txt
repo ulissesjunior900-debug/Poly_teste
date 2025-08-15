@@ -1,0 +1,20 @@
+from retroativos_models import RetroativoArquivo, RetroativoCalculado, TituloPeriodoValor
+from app import db
+
+ano_para_excluir = 2014
+
+# 1. Excluir valores por título/mês
+db.session.query(TituloPeriodoValor).filter_by(ano=ano_para_excluir).delete(synchronize_session=False)
+
+# 2. Excluir valores calculados por artista/ano
+db.session.query(RetroativoCalculado).filter_by(ano=ano_para_excluir).delete(synchronize_session=False)
+
+# 3. Excluir registros de arquivos processados desse ano
+db.session.query(RetroativoArquivo).filter_by(ano=ano_para_excluir).delete(synchronize_session=False)
+
+db.session.commit()
+print("🔁 Ano 2014  excluído com sucesso!")
+
+
+
+ 
